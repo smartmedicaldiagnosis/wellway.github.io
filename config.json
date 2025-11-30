@@ -1,5 +1,6 @@
 {
   "version": "1.0",
+  "admin_password": "wellway",
   "corpora": [
     {
       "id": "main",
@@ -64,10 +65,24 @@
       "show_details": false
     }
   ],
-  "admin_password_hash": "2a$10$examplehashofpasswordwellway", // bcrypt(admin) — пример
   "qr_nodes": [
-    { "id": "node_main_entrance", "name": "Главный вход", "building": "main", "floor": "1" },
-    { "id": "node_1f_right_entrance", "name": "Вход в правое крыло (1 этаж)", "building": "main", "floor": "1" },
-    { "id": "node_2f_205", "name": "Кабинет 205", "building": "main", "floor": "2" }
+    {
+      "id": "node_main_entrance",
+      "name": "Главный вход",
+      "building": "main",
+      "floor": "1"
+    },
+    {
+      "id": "node_1f_right_entrance",
+      "name": "Вход в правое крыло (1 этаж)",
+      "building": "main",
+      "floor": "1"
+    },
+    {
+      "id": "node_2f_205",
+      "name": "Кабинет 205",
+      "building": "main",
+      "floor": "2"
+    }
   ]
 }
