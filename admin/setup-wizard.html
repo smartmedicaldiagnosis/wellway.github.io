@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Мастер настройки — WellWay</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <div class="admin-container">
+    <h1>🧭 Мастер настройки</h1>
+    <div id="wizard"></div>
+    <button id="btn-prev" class="btn" disabled>← Назад</button>
+    <button id="btn-next" class="btn btn-primary">Далее →</button>
+  </div>
+
+  <script src="js/setup-wizard.js"></script>
+  <script>
+    const wizard = new SetupWizard({
+      container: document.getElementById('wizard'),
+      onPrev: () => console.log('prev'),
+      onNext: (stepData) => console.log('next', stepData),
+      onFinish: (config) => {
+        console.log('Финальная конфигурация:', config);
+        // TODO: сохранить в config.json (через download или GitHub API)
+        const blob = new Blob([JSON.stringify(config, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'config.json';
+        a.click();
+      }
+    });
+    wizard.start();
+  </script>
+</body>
+</html>
