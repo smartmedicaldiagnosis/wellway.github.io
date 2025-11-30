@@ -15,7 +15,6 @@ class SetupWizard {
   }
 
   start() {
-    // Загрузка текущей конфигурации (если есть) можно добавить позже
     this.renderStep();
   }
 
@@ -30,7 +29,8 @@ class SetupWizard {
       default: this.renderStep1();
     }
 
-    document.getElementById('btn-prev').disabled = this.step === 1;
+    const prevBtn = document.getElementById('btn-prev');
+    if (prevBtn) prevBtn.disabled = this.step === 1;
   }
 
   // ——— Шаг 1: количество корпусов и главный вход ———
@@ -50,23 +50,20 @@ class SetupWizard {
     const updateCorpora = () => {
       const n = Math.max(1, parseInt(numInput.value) || 1);
 
-      // Увеличиваем — сохраняем старые данные, добавляем новые
       while (this.data.corpora.length < n) {
         const idx = this.data.corpora.length + 1;
         this.data.corpora.push({
           id: `corp-${idx}`,
           name: `Корпус ${idx}`,
           floors: 1,
-          zones: ['Центр'],  // ← можно оставить как заглушку
+          zones: ['Центр'],
         });
       }
 
-      // Уменьшаем — просто удаляем лишние
       while (this.data.corpora.length > n) {
         this.data.corpora.pop();
       }
 
-      // Перестроить select, НЕ перезаписывая корпуса
       entranceSelect.innerHTML = '';
       this.data.corpora.forEach((corp, i) => {
         const opt = document.createElement('option');
@@ -75,7 +72,6 @@ class SetupWizard {
         entranceSelect.appendChild(opt);
       });
 
-      // Установить или сохранить главный вход
       if (!this.data.mainEntrance && this.data.corpora.length > 0) {
         this.data.mainEntrance = this.data.corpora[0].id;
       }
@@ -84,9 +80,8 @@ class SetupWizard {
       }
     };
 
-    // 🔥 Используем onchange — НЕ oninput!
     numInput.onchange = updateCorpora;
-    updateCorpora(); // инициализация
+    updateCorpora();
 
     entranceSelect.onchange = () => {
       this.data.mainEntrance = entranceSelect.value;
@@ -144,30 +139,51 @@ class SetupWizard {
     this.renderStep2();
   }
 
-  // ——— Шаг 3: распределение кабинетов (предварительный просмотр) ———
+  // ——— Шаг 3: распределение кабинетов — ОБНОВЛЁННЫЙ ———
   renderStep3() {
-    this.container.innerHTML = `
-      <h2>Шаг 3: Распределение кабинетов</h2>
-      <p>Пример распределения по корпусам и этажам:</p>
-    `;
+    this.container.innerHTML = `<h2>Шаг 3: Распределение кабинетов</h2>`;
 
     const preview = document.createElement('div');
+    preview.style.lineHeight = '1.6';
+
     this.data.corpora.forEach((corp, ci) => {
-      const corpDiv = document.createElement('div');
-      corpDiv.innerHTML = `<h3>${corp.name}</h3><ul>`;
-      for (let fi = 0; fi < corp.floors; fi++) {
-        const floorNum = fi + 1;
-        const zones = corp.zones.length ? corp.zones.join(', ') : '—';
-        corpDiv.innerHTML += `<li><strong>Этаж ${floorNum}</strong> — зоны: ${zones}</li>`;
-      }
-      corpDiv.innerHTML += `</ul><hr>`;
-      preview.appendChild(corpDiv);
+      const corpsDiv = document.createElement('div');
+      corpsDiv.style.marginBottom = '1.5rem';
+      corpsDiv.style.padding = '1rem';
+      corpsDiv.style.border = '1px solid #eee';
+      corpsDiv.style.borderRadius = '8px';
+      corpsDiv.style.backgroundColor = '#fafafa';
+
+      const title = document.createElement('h3');
+      title.textContent = `Корпус ${ci + 1}`;
+      title.style.marginTop = '0';
+      title.style.marginBottom = '0.5rem';
+
+      const floorsInfo = document.createElement('p');
+      floorsInfo.innerHTML = `<strong>Этажей:</strong> ${corp.floors}`;
+      floorsInfo.style.margin = '0.25rem 0';
+
+      const zonesInfo = document.createElement('p');
+      const zonesList = corp.zones.length
+        ? corp.zones.join(', ')
+        : '—';
+      zonesInfo.innerHTML = `<strong>Зоны:</strong> ${zonesList}`;
+      zonesInfo.style.margin = '0.25rem 0';
+
+      corpsDiv.appendChild(title);
+      corpsDiv.appendChild(floorsInfo);
+      corpsDiv.appendChild(zonesInfo);
+      preview.appendChild(corpsDiv);
     });
 
     this.container.appendChild(preview);
-    this.container.innerHTML += `
-      <p><em>Подробное назначение диапазонов кабинетов доступно в <strong>ручном редакторе</strong> после завершения мастера.</em></p>
-    `;
+
+    const note = document.createElement('p');
+    note.style.fontSize = '0.9rem';
+    note.style.color = '#666';
+    note.style.marginTop = '1.5rem';
+    note.innerHTML = `<em>Подробное распределение кабинетов по зонам (например, «101–110») будет доступно в <strong>ручном редакторе</strong> после завершения мастера.</em>`;
+    this.container.appendChild(note);
   }
 
   // ——— Шаг 4: специальности ———
@@ -279,7 +295,7 @@ class SetupWizard {
         ${this.data.corpora.map((corp, ci) =>
           corp.zones.map((zone, zi) =>
             `<li>• Вход в «${zone}», ${Math.min(2, corp.floors)} этаж (${corp.name})</li>`
-          ).slice(0, 1) // по одному примеру на корпус
+          ).slice(0, 1)
         ).flat().join('')}
       </ul>
       <p><em>Точную настройку узлов можно выполнить в редакторе позже.</em></p>
@@ -299,7 +315,7 @@ class SetupWizard {
           id: `${fi + 1}`,
           zones: corp.zones.map(zoneName => ({
             name: zoneName,
-            range: '', // диапазон — позже вручную
+            range: '',
             node: `node_${corp.id}_${fi + 1}f_${zoneName.replace(/\s+/g, '_').toLowerCase()}_entrance`,
           })),
         })),
@@ -312,7 +328,7 @@ class SetupWizard {
           number: room.number,
           name: spec.roomName || spec.name,
           building: this.data.corpora[0]?.id || 'main',
-          floor: '2', // ← можно определять из диапазона позже
+          floor: '2',
           node: `node_${room.number}`,
         })),
         doctor: spec.doctor || 'Иванова А.П.',
@@ -327,7 +343,6 @@ class SetupWizard {
           building: this.data.corpora[0]?.id || 'main',
           floor: '1',
         },
-        // Добавим автоматически узлы входов в зоны
         ...this.data.corpora.flatMap(corp =>
           Array.from({ length: corp.floors }, (_, fi) =>
             corp.zones.map(zone =>
