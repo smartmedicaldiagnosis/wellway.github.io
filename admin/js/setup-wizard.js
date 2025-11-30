@@ -9,42 +9,37 @@ class SetupWizard {
       corpora: [],
       specialties: [],
       qrNodes: [],
+      mainEntrance: null,
     };
     this.currentCorpusIndex = 0;
   }
 
   start() {
+    // Загрузка текущей конфигурации (если есть) можно добавить позже
     this.renderStep();
   }
 
   renderStep() {
     this.container.innerHTML = '';
     switch (this.step) {
-      case 1:
-        this.renderStep1();
-        break;
-      case 2:
-        this.renderStep2();
-        break;
-      case 3:
-        this.renderStep3();
-        break;
-      case 4:
-        this.renderStep4();
-        break;
-      case 5:
-        this.renderStep5();
-        break;
+      case 1: this.renderStep1(); break;
+      case 2: this.renderStep2(); break;
+      case 3: this.renderStep3(); break;
+      case 4: this.renderStep4(); break;
+      case 5: this.renderStep5(); break;
+      default: this.renderStep1();
     }
+
     document.getElementById('btn-prev').disabled = this.step === 1;
   }
 
   // ——— Шаг 1: количество корпусов и главный вход ———
   renderStep1() {
+    const currentCount = this.data.corpora.length || 1;
     this.container.innerHTML = `
       <h2>Шаг 1: Основные параметры</h2>
       <label>Сколько корпусов?</label>
-      <input type="number" id="num-corpora" min="1" value="${this.data.corpora.length || 1}">
+      <input type="number" id="num-corpora" min="1" value="${currentCount}">
       <label>Главный вход в корпусе:</label>
       <select id="main-entrance"></select>
     `;
@@ -54,19 +49,24 @@ class SetupWizard {
 
     const updateCorpora = () => {
       const n = Math.max(1, parseInt(numInput.value) || 1);
+
+      // Увеличиваем — сохраняем старые данные, добавляем новые
       while (this.data.corpora.length < n) {
         const idx = this.data.corpora.length + 1;
         this.data.corpora.push({
           id: `corp-${idx}`,
           name: `Корпус ${idx}`,
           floors: 1,
-          zones: ['Центр'],
+          zones: ['Центр'],  // ← можно оставить как заглушку
         });
       }
+
+      // Уменьшаем — просто удаляем лишние
       while (this.data.corpora.length > n) {
         this.data.corpora.pop();
       }
 
+      // Перестроить select, НЕ перезаписывая корпуса
       entranceSelect.innerHTML = '';
       this.data.corpora.forEach((corp, i) => {
         const opt = document.createElement('option');
@@ -75,33 +75,41 @@ class SetupWizard {
         entranceSelect.appendChild(opt);
       });
 
-      // Сохраняем при изменении
-      this.data.mainEntrance = entranceSelect.value;
+      // Установить или сохранить главный вход
+      if (!this.data.mainEntrance && this.data.corpora.length > 0) {
+        this.data.mainEntrance = this.data.corpora[0].id;
+      }
+      if (this.data.mainEntrance) {
+        entranceSelect.value = this.data.mainEntrance;
+      }
     };
 
-    numInput.oninput = updateCorpora;
-    updateCorpora();
+    // 🔥 Используем onchange — НЕ oninput!
+    numInput.onchange = updateCorpora;
+    updateCorpora(); // инициализация
+
+    entranceSelect.onchange = () => {
+      this.data.mainEntrance = entranceSelect.value;
+    };
 
     if (this.data.mainEntrance) {
       entranceSelect.value = this.data.mainEntrance;
     }
-
-    // Обновляем при выборе корпуса
-    entranceSelect.onchange = () => {
-      this.data.mainEntrance = entranceSelect.value;
-    };
   }
 
-  // ——— Шаг 2: настройка корпусов ———
+  // ——— Шаг 2: настройка корпусов по одному ———
   renderStep2() {
     const corp = this.data.corpora[this.currentCorpusIndex];
+    if (!corp) {
+      this.step = 1;
+      this.renderStep();
+      return;
+    }
 
     let corpsButtons = '';
     this.data.corpora.forEach((c, i) => {
-      const activeClass = i === this.currentCorpusIndex ? 'btn-primary' : '';
-      corpsButtons += `<button type="button" class="btn ${activeClass}" onclick="wizardInstance.switchCorpus(${i})">
-        ${c.name}
-      </button>`;
+      const activeClass = i === this.currentCorpusIndex ? ' btn-primary' : '';
+      corpsButtons += `<button type="button" class="btn${activeClass}" onclick="wizardInstance.switchCorpus(${i})">${c.name}</button>`;
     });
 
     this.container.innerHTML = `
@@ -110,7 +118,6 @@ class SetupWizard {
       <input type="number" id="floors" min="1" value="${corp.floors}">
       <label>Зоны на этаже (через запятую):</label>
       <input type="text" id="zones" value="${corp.zones.join(', ')}">
-      
       <div style="margin-top: 1rem;">
         <label>Корпус:</label><br>
         ${corpsButtons}
@@ -137,20 +144,29 @@ class SetupWizard {
     this.renderStep2();
   }
 
-  // ——— Шаг 3: распределение кабинетов ———
+  // ——— Шаг 3: распределение кабинетов (предварительный просмотр) ———
   renderStep3() {
     this.container.innerHTML = `
       <h2>Шаг 3: Распределение кабинетов</h2>
-      <p>На основе введённых корпусов и зон система подготовит структуру.</p>
-      <p><strong>Пример для ${this.data.corpora[0]?.name || 'Корпус 1'}:</strong></p>
-      <ul>
-        ${Array.from({ length: this.data.corpora[0]?.floors || 1 }, (_, fi) => {
-          const floorNum = fi + 1;
-          const zones = (this.data.corpora[0]?.zones || ['Центр']).join(', ');
-          return `<li><strong>Этаж ${floorNum}</strong> — зоны: ${zones}</li>`;
-        }).join('')}
-      </ul>
-      <p>Детальное распределение кабинетов будет доступно в <strong>ручном редакторе</strong> после завершения мастера.</p>
+      <p>Пример распределения по корпусам и этажам:</p>
+    `;
+
+    const preview = document.createElement('div');
+    this.data.corpora.forEach((corp, ci) => {
+      const corpDiv = document.createElement('div');
+      corpDiv.innerHTML = `<h3>${corp.name}</h3><ul>`;
+      for (let fi = 0; fi < corp.floors; fi++) {
+        const floorNum = fi + 1;
+        const zones = corp.zones.length ? corp.zones.join(', ') : '—';
+        corpDiv.innerHTML += `<li><strong>Этаж ${floorNum}</strong> — зоны: ${zones}</li>`;
+      }
+      corpDiv.innerHTML += `</ul><hr>`;
+      preview.appendChild(corpDiv);
+    });
+
+    this.container.appendChild(preview);
+    this.container.innerHTML += `
+      <p><em>Подробное назначение диапазонов кабинетов доступно в <strong>ручном редакторе</strong> после завершения мастера.</em></p>
     `;
   }
 
@@ -159,7 +175,7 @@ class SetupWizard {
     this.container.innerHTML = `
       <h2>Шаг 4: Специальности</h2>
       <div id="specs"></div>
-      <button class="btn btn-primary" onclick="wizardInstance.addSpecialty()">➕ Добавить специальность</button>
+      <button class="btn btn-primary" onclick="wizardInstance.addSpecialty()">Добавить ➕ специальность</button>
     `;
 
     const specsContainer = document.getElementById('specs');
@@ -181,23 +197,15 @@ class SetupWizard {
       <hr>
       <label>Название:</label>
       <input type="text" data-index="${index}" data-field="name" value="${spec.name || ''}">
-      
       <label>Синонимы (через запятую):</label>
-      <input type="text" data-index="${index}" data-field="synonyms" value="${spec.synonyms?.join(', ') || ''}">
-      
+      <input type="text" data-index="${index}" data-field="synonyms" value="${(spec.synonyms || []).join(', ')}">
       <label>Кабинеты (номера через запятую):</label>
-      <input type="text" data-index="${index}" data-field="rooms" value="${spec.rooms?.map(r => r.number)?.join(', ') || ''}">
-      
+      <input type="text" data-index="${index}" data-field="rooms" value="${(spec.rooms || []).map(r => r.number).join(', ')}">
       <label>Название помещения:</label>
       <input type="text" data-index="${index}" data-field="roomName" value="${spec.roomName || ''}">
-      
       <label><input type="checkbox" data-index="${index}" data-field="showDoctor" ${spec.showDoctor ? 'checked' : ''}> Показывать фамилию врача (скрыто)</label>
-      
       <label><input type="checkbox" data-index="${index}" data-field="showSchedule" ${spec.showSchedule ? 'checked' : ''}> Показывать расписание (скрыто)</label>
-      
-      <button type="button" class="btn" style="background:#f44336;color:white;" onclick="wizardInstance.removeSpecialty(${index})">
-        Удалить
-      </button>
+      <button type="button" class="btn" style="background:#f44336;color:white;" onclick="wizardInstance.removeSpecialty(${index})">Удалить</button>
     `;
     document.getElementById('specs').appendChild(div);
 
@@ -261,18 +269,21 @@ class SetupWizard {
     this.renderStep4();
   }
 
-  // ——— Шаг 5: генерация QR ———
+  // ——— Шаг 5: генерация QR и сохранение ———
   renderStep5() {
     this.container.innerHTML = `
       <h2>Шаг 5: Генерация QR-кодов</h2>
       <p>Рекомендуемые точки размещения QR-кодов:</p>
       <ul>
         <li>• Главный вход (${this.data.corpora[0]?.name || 'Корпус 1'}, 1 этаж)</li>
-        <li>• Вход в ${this.data.corpora[0]?.zones[0] || 'центр'}, 2 этаж</li>
-        <li>• Развилка у лифта, 3 этаж</li>
+        ${this.data.corpora.map((corp, ci) =>
+          corp.zones.map((zone, zi) =>
+            `<li>• Вход в «${zone}», ${Math.min(2, corp.floors)} этаж (${corp.name})</li>`
+          ).slice(0, 1) // по одному примеру на корпус
+        ).flat().join('')}
       </ul>
-      <p><em>Подробная настройка точек будет доступна в редакторе.</em></p>
-      <button class="btn btn-primary" onclick="wizardInstance.generateQR()">✅ Сохранить и скачать config.json</button>
+      <p><em>Точную настройку узлов можно выполнить в редакторе позже.</em></p>
+      <button class="btn btn-primary" onclick="wizardInstance.generateQR()">Сохранить и скачать ✅ config.json</button>
     `;
   }
 
@@ -280,20 +291,19 @@ class SetupWizard {
     const config = {
       version: '1.1',
       admin_password: 'wellway',
-      corpora: this.data.corpora.map((corp, i) => ({
+      corpora: this.data.corpora.map((corp) => ({
         id: corp.id,
         name: corp.name,
-        entrance: i === 0 ? (this.data.mainEntrance || corp.id) : null,
+        entrance: corp.id === this.data.mainEntrance ? 'node_main_entrance' : null,
         floors: Array.from({ length: corp.floors }, (_, fi) => ({
           id: `${fi + 1}`,
           zones: corp.zones.map(zoneName => ({
             name: zoneName,
-            range: '',
+            range: '', // диапазон — позже вручную
             node: `node_${corp.id}_${fi + 1}f_${zoneName.replace(/\s+/g, '_').toLowerCase()}_entrance`,
           })),
         })),
       })),
-
       specialties: this.data.specialties.map(spec => ({
         id: spec.id,
         name: spec.name,
@@ -302,15 +312,14 @@ class SetupWizard {
           number: room.number,
           name: spec.roomName || spec.name,
           building: this.data.corpora[0]?.id || 'main',
-          floor: '2',
+          floor: '2', // ← можно определять из диапазона позже
           node: `node_${room.number}`,
         })),
-        doctor: spec.doctor,
-        schedule: spec.schedule,
-        status: spec.status,
-        show_details: spec.showDoctor || spec.showSchedule,
+        doctor: spec.doctor || 'Иванова А.П.',
+        schedule: spec.schedule || 'Пн–Пт 9:00–15:00',
+        status: spec.status || 'работает',
+        show_details: !!(spec.showDoctor || spec.showSchedule),
       })),
-
       qr_nodes: [
         {
           id: 'node_main_entrance',
@@ -318,6 +327,19 @@ class SetupWizard {
           building: this.data.corpora[0]?.id || 'main',
           floor: '1',
         },
+        // Добавим автоматически узлы входов в зоны
+        ...this.data.corpora.flatMap(corp =>
+          Array.from({ length: corp.floors }, (_, fi) =>
+            corp.zones.map(zone =>
+              ({
+                id: `node_${corp.id}_${fi + 1}f_${zone.replace(/\s+/g, '_').toLowerCase()}_entrance`,
+                name: `Вход в ${zone} (${corp.name}, ${fi + 1} этаж)`,
+                building: corp.id,
+                floor: `${fi + 1}`,
+              })
+            )
+          ).flat()
+        ),
       ],
     };
 
@@ -328,6 +350,8 @@ class SetupWizard {
     a.download = 'config.json';
     a.click();
     URL.revokeObjectURL(url);
+
+    if (this.onFinish) this.onFinish(config);
   }
 
   // ——— Навигация ———
@@ -353,20 +377,14 @@ class SetupWizard {
 // Глобальный экземпляр для onclick
 window.wizardInstance = null;
 
-// Привязка событий к кнопкам
 function bindWizardButtons(wizard) {
   const nextBtn = document.getElementById('btn-next');
   const prevBtn = document.getElementById('btn-prev');
 
-  if (nextBtn) {
-    nextBtn.onclick = () => wizard.next();
-  }
-  if (prevBtn) {
-    prevBtn.onclick = () => wizard.prev();
-  }
+  if (nextBtn) nextBtn.onclick = () => wizard.next();
+  if (prevBtn) prevBtn.onclick = () => wizard.prev();
 }
 
-// Инициализация
 function initWizard() {
   const container = document.getElementById('wizard');
   if (!container) return;
@@ -375,7 +393,7 @@ function initWizard() {
     container: container,
     onPrev: () => console.log('← Назад'),
     onNext: () => console.log('→ Далее'),
-    onFinish: (cfg) => console.log('✅ Сохранено:', cfg),
+    onFinish: (cfg) => console.log('✅ Конфигурация сформирована:', cfg),
   });
 
   window.wizardInstance = wizard;
@@ -383,7 +401,6 @@ function initWizard() {
   bindWizardButtons(wizard);
 }
 
-// Запуск при загрузке
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initWizard);
 } else {
