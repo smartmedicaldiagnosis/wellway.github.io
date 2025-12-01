@@ -8,7 +8,6 @@ class SetupWizard {
     this.data = {
       corpora: [],
       specialties: [],
-      qrNodes: [],
       mainEntrance: null,
     };
     this.currentCorpusIndex = 0;
@@ -21,12 +20,23 @@ class SetupWizard {
   renderStep() {
     this.container.innerHTML = '';
     switch (this.step) {
-      case 1: this.renderStep1(); break;
-      case 2: this.renderStep2(); break;
-      case 3: this.renderStep3(); break;
-      case 4: this.renderStep4(); break;
-      case 5: this.renderStep5(); break;
-      default: this.renderStep1();
+      case 1:
+        this.renderStep1();
+        break;
+      case 2:
+        this.renderStep2();
+        break;
+      case 3:
+        this.renderStep3();
+        break;
+      case 4:
+        this.renderStep4();
+        break;
+      case 5:
+        this.renderStep5();
+        break;
+      default:
+        this.renderStep1();
     }
 
     const prevBtn = document.getElementById('btn-prev');
@@ -49,7 +59,6 @@ class SetupWizard {
 
     const updateCorpora = () => {
       const n = Math.max(1, parseInt(numInput.value) || 1);
-
       while (this.data.corpora.length < n) {
         const idx = this.data.corpora.length + 1;
         this.data.corpora.push({
@@ -59,7 +68,6 @@ class SetupWizard {
           zones: ['Центр'],
         });
       }
-
       while (this.data.corpora.length > n) {
         this.data.corpora.pop();
       }
@@ -139,51 +147,111 @@ class SetupWizard {
     this.renderStep2();
   }
 
-  // ——— Шаг 3: распределение кабинетов — ОБНОВЛЁННЫЙ ———
+  // ——— Шаг 3: распределение кабинетов — ПОЛНЫЙ ВВОД (обновлённый) ———
   renderStep3() {
     this.container.innerHTML = `<h2>Шаг 3: Распределение кабинетов</h2>`;
 
-    const preview = document.createElement('div');
-    preview.style.lineHeight = '1.6';
+    const corpsContainer = document.createElement('div');
+    corpsContainer.id = 'corps-config';
 
     this.data.corpora.forEach((corp, ci) => {
-      const corpsDiv = document.createElement('div');
-      corpsDiv.style.marginBottom = '1.5rem';
-      corpsDiv.style.padding = '1rem';
-      corpsDiv.style.border = '1px solid #eee';
-      corpsDiv.style.borderRadius = '8px';
-      corpsDiv.style.backgroundColor = '#fafafa';
+      const corpDiv = document.createElement('div');
+      corpDiv.className = 'corp-section';
+      corpDiv.style.border = '1px solid #eee';
+      corpDiv.style.borderRadius = '8px';
+      corpDiv.style.padding = '1rem';
+      corpDiv.style.marginBottom = '1.5rem';
+      corpDiv.style.backgroundColor = '#fafafa';
 
       const title = document.createElement('h3');
-      title.textContent = `Корпус ${ci + 1}`;
-      title.style.marginTop = '0';
-      title.style.marginBottom = '0.5rem';
+      title.textContent = `Корпус: ${corp.name}`;
+      corpDiv.appendChild(title);
 
-      const floorsInfo = document.createElement('p');
-      floorsInfo.innerHTML = `<strong>Этажей:</strong> ${corp.floors}`;
-      floorsInfo.style.margin = '0.25rem 0';
+      for (let fi = 1; fi <= corp.floors; fi++) {
+        const floorDiv = document.createElement('div');
+        floorDiv.className = 'floor-section';
+        floorDiv.style.marginTop = '1rem';
 
-      const zonesInfo = document.createElement('p');
-      const zonesList = corp.zones.length
-        ? corp.zones.join(', ')
-        : '—';
-      zonesInfo.innerHTML = `<strong>Зоны:</strong> ${zonesList}`;
-      zonesInfo.style.margin = '0.25rem 0';
+        const floorTitle = document.createElement('h4');
+        floorTitle.textContent = `Этаж ${fi}`;
+        floorTitle.style.margin = '0.5rem 0';
+        floorDiv.appendChild(floorTitle);
 
-      corpsDiv.appendChild(title);
-      corpsDiv.appendChild(floorsInfo);
-      corpsDiv.appendChild(zonesInfo);
-      preview.appendChild(corpsDiv);
+        corp.zones.forEach((zoneName, zi) => {
+          const zoneDiv = document.createElement('div');
+          zoneDiv.className = 'zone-config';
+          zoneDiv.style.padding = '0.75rem';
+          zoneDiv.style.border = '1px dashed #ccc';
+          zoneDiv.style.borderRadius = '4px';
+          zoneDiv.style.marginTop = '0.5rem';
+          zoneDiv.style.backgroundColor = '#fff';
+
+          zoneDiv.innerHTML = `
+            <strong>${zoneName}</strong>
+            <div style="margin-top: 0.5rem;">
+              <label>Диапазон кабинетов:</label>
+              <input type="text" class="range-input" data-corp="${ci}" data-floor="${fi}" data-zone="${zi}" 
+                     placeholder="101–110" value="${this._getZoneValue(ci, fi, zi, 'range') || ''}">
+            </div>
+            <div>
+              <label>Тип кабинетов:</label>
+              <input type="text" class="type-input" data-corp="${ci}" data-floor="${fi}" data-zone="${zi}" 
+                     placeholder="Основные приёмы" value="${this._getZoneValue(ci, fi, zi, 'type') || ''}">
+            </div>
+            <div>
+              <label>ID узла входа:</label>
+              <input type="text" class="node-input" data-corp="${ci}" data-floor="${fi}" data-zone="${zi}" 
+                     placeholder="node_1f_right_entrance" value="${this._getZoneValue(ci, fi, zi, 'node') || ''}">
+            </div>
+          `;
+          floorDiv.appendChild(zoneDiv);
+        });
+
+        corpDiv.appendChild(floorDiv);
+      }
+
+      corpsContainer.appendChild(corpDiv);
     });
 
-    this.container.appendChild(preview);
+    this.container.appendChild(corpsContainer);
 
-    const note = document.createElement('p');
-    note.style.fontSize = '0.9rem';
-    note.style.color = '#666';
-    note.style.marginTop = '1.5rem';
-    note.innerHTML = `<em>Подробное распределение кабинетов по зонам (например, «101–110») будет доступно в <strong>ручном редакторе</strong> после завершения мастера.</em>`;
-    this.container.appendChild(note);
+    // — Обработчики input —
+    corpsContainer.querySelectorAll('input').forEach(input => {
+      input.addEventListener('input', (e) => {
+        const { corp, floor, zone } = e.target.dataset;
+        const field = e.target.classList.contains('range-input') ? 'range' :
+                      e.target.classList.contains('type-input')  ? 'type'  :
+                      e.target.classList.contains('node-input')  ? 'node'  : null;
+
+        if (!field) return;
+
+        // Инициализируем структуру, если ещё не создана
+        if (!this.data.corpora[corp].floorZones) {
+          this.data.corpora[corp].floorZones = {};
+        }
+        const key = `${floor}-${zone}`;
+        if (!this.data.corpora[corp].floorZones[key]) {
+          this.data.corpora[corp].floorZones[key] = {};
+        }
+
+        this.data.corpora[corp].floorZones[key][field] = e.target.value.trim();
+      });
+    });
+
+    // — Кнопка перехода к следующему шагу —
+    const nextBtn = document.getElementById('btn-next');
+    if (nextBtn && !nextBtn.dataset.bound) {
+      nextBtn.dataset.bound = 'true';
+      nextBtn.onclick = () => this.next();
+    }
+  }
+
+  // Вспомогательная функция для получения сохранённого значения
+  _getZoneValue(corpIdx, floor, zoneIdx, field) {
+    const corp = this.data.corpora[corpIdx];
+    if (!corp || !corp.floorZones) return '';
+    const key = `${floor}-${zoneIdx}`;
+    return corp.floorZones[key]?.[field] || '';
   }
 
   // ——— Шаг 4: специальности ———
@@ -214,15 +282,16 @@ class SetupWizard {
       <label>Название:</label>
       <input type="text" data-index="${index}" data-field="name" value="${spec.name || ''}">
       <label>Синонимы (через запятую):</label>
-      <input type="text" data-index="${index}" data-field="synonyms" value="${(spec.synonyms || []).join(', ')}">
+      <input type="text" data-index="${index}" data-field="synonyms" value="${(spec.synonyms || []).join(',')}">
       <label>Кабинеты (номера через запятую):</label>
-      <input type="text" data-index="${index}" data-field="rooms" value="${(spec.rooms || []).map(r => r.number).join(', ')}">
+      <input type="text" data-index="${index}" data-field="rooms" value="${(spec.rooms || []).map(r => r.number).join(',')}">
       <label>Название помещения:</label>
       <input type="text" data-index="${index}" data-field="roomName" value="${spec.roomName || ''}">
       <label><input type="checkbox" data-index="${index}" data-field="showDoctor" ${spec.showDoctor ? 'checked' : ''}> Показывать фамилию врача (скрыто)</label>
       <label><input type="checkbox" data-index="${index}" data-field="showSchedule" ${spec.showSchedule ? 'checked' : ''}> Показывать расписание (скрыто)</label>
       <button type="button" class="btn" style="background:#f44336;color:white;" onclick="wizardInstance.removeSpecialty(${index})">Удалить</button>
     `;
+
     document.getElementById('specs').appendChild(div);
 
     div.querySelectorAll('input').forEach(el => {
@@ -292,11 +361,16 @@ class SetupWizard {
       <p>Рекомендуемые точки размещения QR-кодов:</p>
       <ul>
         <li>• Главный вход (${this.data.corpora[0]?.name || 'Корпус 1'}, 1 этаж)</li>
-        ${this.data.corpora.map((corp, ci) =>
-          corp.zones.map((zone, zi) =>
-            `<li>• Вход в «${zone}», ${Math.min(2, corp.floors)} этаж (${corp.name})</li>`
-          ).slice(0, 1)
-        ).flat().join('')}
+        ${this.data.corpora
+          .map((corp, ci) =>
+            corp.zones
+              .map((zone, zi) =>
+                `<li>• Вход в «${zone}», ${Math.min(2, corp.floors)} этаж (${corp.name})</li>`
+              )
+              .slice(0, 1)
+          )
+          .flat()
+          .join('')}
       </ul>
       <p><em>Точную настройку узлов можно выполнить в редакторе позже.</em></p>
       <button class="btn btn-primary" onclick="wizardInstance.generateQR()">Сохранить и скачать ✅ config.json</button>
@@ -310,21 +384,28 @@ class SetupWizard {
       corpora: this.data.corpora.map((corp) => ({
         id: corp.id,
         name: corp.name,
-        entrance: corp.id === this.data.mainEntrance ? 'node_main_entrance' : null,
+        entrance:
+          corp.id === this.data.mainEntrance ? 'node_main_entrance' : null,
         floors: Array.from({ length: corp.floors }, (_, fi) => ({
           id: `${fi + 1}`,
-          zones: corp.zones.map(zoneName => ({
-            name: zoneName,
-            range: '',
-            node: `node_${corp.id}_${fi + 1}f_${zoneName.replace(/\s+/g, '_').toLowerCase()}_entrance`,
-          })),
+          zones: corp.zones.map((zoneName, zi) => {
+            const key = `${fi + 1}-${zi}`;
+            const zoneData = corp.floorZones?.[key] || {};
+            return {
+              name: zoneName,
+              range: zoneData.range || '',
+              node:
+                zoneData.node ||
+                `node_${corp.id}_${fi + 1}f_${zoneName.replace(/\s+/g, '_').toLowerCase()}_entrance`,
+            };
+          }),
         })),
       })),
-      specialties: this.data.specialties.map(spec => ({
+      specialties: this.data.specialties.map((spec) => ({
         id: spec.id,
         name: spec.name,
         synonyms: spec.synonyms || [],
-        rooms: (spec.rooms || []).map(room => ({
+        rooms: (spec.rooms || []).map((room) => ({
           number: room.number,
           name: spec.roomName || spec.name,
           building: this.data.corpora[0]?.id || 'main',
@@ -343,17 +424,23 @@ class SetupWizard {
           building: this.data.corpora[0]?.id || 'main',
           floor: '1',
         },
-        ...this.data.corpora.flatMap(corp =>
+        // Добавляем узлы из floorZones.node
+        ...this.data.corpora.flatMap((corp) =>
           Array.from({ length: corp.floors }, (_, fi) =>
-            corp.zones.map(zone =>
-              ({
-                id: `node_${corp.id}_${fi + 1}f_${zone.replace(/\s+/g, '_').toLowerCase()}_entrance`,
-                name: `Вход в ${zone} (${corp.name}, ${fi + 1} этаж)`,
-                building: corp.id,
-                floor: `${fi + 1}`,
-              })
-            )
-          ).flat()
+            corp.zones.map((_, zi) => {
+              const key = `${fi + 1}-${zi}`;
+              const zoneData = corp.floorZones?.[key];
+              if (zoneData?.node) {
+                return {
+                  id: zoneData.node,
+                  name: `Вход (${corp.name}, этаж ${fi + 1}, зона ${corp.zones[zi]})`,
+                  building: corp.id,
+                  floor: `${fi + 1}`,
+                };
+              }
+              return null;
+            })
+          ).flat().filter(Boolean)
         ),
       ],
     };
@@ -389,13 +476,12 @@ class SetupWizard {
   }
 }
 
-// Глобальный экземпляр для onclick
+// ——— Инициализация ———
 window.wizardInstance = null;
 
 function bindWizardButtons(wizard) {
   const nextBtn = document.getElementById('btn-next');
   const prevBtn = document.getElementById('btn-prev');
-
   if (nextBtn) nextBtn.onclick = () => wizard.next();
   if (prevBtn) prevBtn.onclick = () => wizard.prev();
 }
