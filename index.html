@@ -15,6 +15,13 @@
         @keyframes fadeIn { to { opacity: 1; } }
         .pulse { animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .admin-content { display: block; }
+        .admin-content.hidden { display: none; }
+        .floor-card { transition: all 0.2s; }
+        .floor-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .building-btn { transition: all 0.2s; }
+        .building-btn:hover { transform: scale(1.02); }
+        .building-btn.active { ring: 2px; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -39,7 +46,7 @@
     <main class="max-w-lg mx-auto p-4 pb-24">
         <!-- Screen: Start -->
         <div id="screen-start" class="screen active">
-            <div class="text-center mb-8 mt-4">
+            <div class="text-center mb-6 mt-4">
                 <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
@@ -47,7 +54,41 @@
                     </svg>
                 </div>
                 <h2 class="text-2xl font-bold text-gray-800 mb-2">Найти кабинет</h2>
-                <p class="text-gray-500" id="current-location">📍 Вы у главного входа</p>
+            </div>
+
+            <!-- Location Selection -->
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl shadow-lg p-5 mb-6 text-white">
+                <div class="flex items-center gap-2 mb-3">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span class="font-semibold">Где вы сейчас находитесь?</span>
+                </div>
+                
+                <!-- Building Selection -->
+                <div class="mb-3">
+                    <p class="text-blue-100 text-sm mb-2">Выберите корпус:</p>
+                    <div id="building-buttons" class="flex flex-wrap gap-2">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+                
+                <!-- Location in Building -->
+                <div>
+                    <p class="text-blue-100 text-sm mb-2">Уточните местоположение:</p>
+                    <select id="location-select" onchange="updateCurrentLocation()" 
+                            class="w-full bg-white/20 backdrop-blur border-2 border-white/30 rounded-xl px-4 py-3 text-white placeholder-white/70 focus:border-white focus:outline-none">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                
+                <div class="mt-3 pt-3 border-t border-white/20">
+                    <p class="text-sm">
+                        <span class="text-blue-100">Текущая точка:</span>
+                        <span id="current-location-text" class="font-medium ml-1">Главный корпус — Вход</span>
+                    </p>
+                </div>
             </div>
 
             <!-- Option 1: Room Number -->
@@ -160,6 +201,7 @@
                     <div>
                         <p class="text-gray-500 text-sm">Ваша цель</p>
                         <p class="font-bold text-lg text-gray-800" id="route-target">Кабинет 314</p>
+                        <p class="text-blue-600 text-sm" id="route-building"></p>
                     </div>
                 </div>
             </div>
@@ -170,38 +212,24 @@
                 <!-- Populated by JS -->
             </div>
 
-            <!-- QR Scan Prompt -->
-            <div class="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4 mt-6">
+            <!-- Update Location -->
+            <div class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 mt-6">
                 <div class="flex items-start gap-3">
-                    <div class="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center flex-shrink-0">
+                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
                     </div>
-                    <div>
-                        <p class="font-semibold text-gray-800">Заблудились?</p>
-                        <p class="text-gray-600 text-sm">Отсканируйте любой QR-код в здании для обновления маршрута</p>
+                    <div class="flex-1">
+                        <p class="font-semibold text-gray-800 mb-2">Обновить местоположение</p>
+                        <p class="text-gray-600 text-sm mb-3">Если вы переместились, укажите новую точку для пересчёта маршрута</p>
+                        <select id="route-location-select" onchange="updateLocationFromRoute()" 
+                                class="w-full border-2 border-blue-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none bg-white">
+                            <!-- Populated by JS -->
+                        </select>
                     </div>
                 </div>
-            </div>
-
-            <!-- Simulate QR Scan for Demo -->
-            <div class="mt-4">
-                <p class="text-gray-500 text-sm mb-2 text-center">Демо: выберите вашу текущую точку</p>
-                <select id="simulate-location" onchange="updateLocation()" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
-                    <option value="entrance">Главный вход</option>
-                    <option value="floor1_center">1 этаж - холл</option>
-                    <option value="floor1_left">1 этаж - левое крыло</option>
-                    <option value="floor1_right">1 этаж - правое крыло</option>
-                    <option value="stairs_1_2">Лестница 1-2 этаж</option>
-                    <option value="floor2_center">2 этаж - холл</option>
-                    <option value="floor2_left">2 этаж - левое крыло</option>
-                    <option value="floor2_right">2 этаж - правое крыло</option>
-                    <option value="stairs_2_3">Лестница 2-3 этаж</option>
-                    <option value="floor3_center">3 этаж - холл</option>
-                    <option value="floor3_left">3 этаж - левое крыло</option>
-                    <option value="floor3_right">3 этаж - правое крыло</option>
-                </select>
             </div>
         </div>
 
@@ -221,7 +249,7 @@
                     <h3 class="font-semibold text-lg text-gray-800 mb-2 flex items-center gap-2">
                         <span class="text-2xl">📍</span> Регистратура
                     </h3>
-                    <p class="text-gray-600 mb-3">1 этаж, напротив входа</p>
+                    <p class="text-gray-600 mb-3">Главный корпус, 1 этаж, напротив входа</p>
                     <p class="text-gray-500 text-sm">Время работы: Пн-Пт 8:00-19:00, Сб 9:00-15:00</p>
                 </div>
 
@@ -236,7 +264,7 @@
                     <h3 class="font-semibold text-lg text-gray-800 mb-2 flex items-center gap-2">
                         <span class="text-2xl">🆘</span> Экстренная помощь
                     </h3>
-                    <p class="text-gray-600">Кабинет 101 (1 этаж, левое крыло)</p>
+                    <p class="text-gray-600">Кабинет 101 (Главный корпус, 1 этаж, левое крыло)</p>
                 </div>
             </div>
         </div>
@@ -277,19 +305,62 @@
             </div>
 
             <!-- Tabs -->
-            <div class="flex gap-2 mb-6">
+            <div class="flex gap-1 mb-6 bg-gray-100 p-1 rounded-xl overflow-x-auto">
+                <button onclick="switchAdminTab('buildings')" id="tab-buildings" 
+                        class="flex-1 py-2 px-2 rounded-lg font-medium transition text-xs bg-white shadow text-gray-800 whitespace-nowrap">
+                    🏢 Корпуса
+                </button>
+                <button onclick="switchAdminTab('floors')" id="tab-floors" 
+                        class="flex-1 py-2 px-2 rounded-lg font-medium transition text-xs text-gray-600 whitespace-nowrap">
+                    🏗️ Этажи
+                </button>
                 <button onclick="switchAdminTab('specialties')" id="tab-specialties" 
-                        class="flex-1 py-3 px-4 rounded-xl font-medium transition bg-blue-500 text-white">
-                    Специальности
+                        class="flex-1 py-2 px-2 rounded-lg font-medium transition text-xs text-gray-600 whitespace-nowrap">
+                    👨‍⚕️ Спец.
                 </button>
                 <button onclick="switchAdminTab('offices')" id="tab-offices"
-                        class="flex-1 py-3 px-4 rounded-xl font-medium transition bg-gray-200 text-gray-700">
-                    Кабинеты
+                        class="flex-1 py-2 px-2 rounded-lg font-medium transition text-xs text-gray-600 whitespace-nowrap">
+                    🚪 Кабинеты
                 </button>
             </div>
 
+            <!-- Admin: Buildings -->
+            <div id="admin-buildings" class="admin-content">
+                <button onclick="showAddBuilding()" class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold mb-4 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Добавить корпус
+                </button>
+
+                <div id="admin-building-list" class="space-y-3">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Admin: Floors -->
+            <div id="admin-floors" class="admin-content hidden">
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-medium mb-2">Выберите корпус</label>
+                    <select id="admin-floor-building-select" onchange="renderAdminFloors()" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+
+                <button onclick="showAddFloor()" class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold mb-4 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Добавить этаж
+                </button>
+
+                <div id="admin-floor-list" class="space-y-3">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
             <!-- Admin: Specialties -->
-            <div id="admin-specialties" class="admin-content">
+            <div id="admin-specialties" class="admin-content hidden">
                 <button onclick="showAddSpecialty()" class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold mb-4 flex items-center justify-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -311,8 +382,137 @@
                     Добавить кабинет
                 </button>
 
+                <!-- Filter by building -->
+                <div class="mb-4">
+                    <select id="admin-office-filter" onchange="renderAdminOffices()" class="w-full border-2 border-gray-200 rounded-xl px-4 py-2 focus:border-blue-500 focus:outline-none">
+                        <option value="">Все корпуса</option>
+                    </select>
+                </div>
+
                 <div id="admin-office-list" class="space-y-3">
                     <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal: Add/Edit Building -->
+        <div id="modal-building" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+                <h3 class="text-xl font-bold mb-4" id="modal-building-title">Добавить корпус</h3>
+                <input type="hidden" id="edit-building-id">
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">ID корпуса (латиница) *</label>
+                        <input type="text" id="building-id-input" placeholder="например: main или small"
+                               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Название корпуса *</label>
+                        <input type="text" id="building-name-input" placeholder="например: Главный корпус"
+                               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Короткое название</label>
+                        <input type="text" id="building-short-input" placeholder="например: Главный"
+                               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Адрес / описание</label>
+                        <input type="text" id="building-address-input" placeholder="ул. Ленина, д. 1"
+                               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Цвет (для отображения)</label>
+                        <select id="building-color-input" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                            <option value="blue">🔵 Синий</option>
+                            <option value="green">🟢 Зелёный</option>
+                            <option value="purple">🟣 Фиолетовый</option>
+                            <option value="orange">🟠 Оранжевый</option>
+                            <option value="red">🔴 Красный</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Связь с другим корпусом</label>
+                        <select id="building-connection-input" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                            <option value="">Нет связи (отдельное здание)</option>
+                        </select>
+                        <p class="text-gray-400 text-xs mt-1">Если корпуса соединены переходом</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button onclick="closeModal('building')" class="flex-1 bg-gray-200 hover:bg-gray-300 py-3 rounded-xl font-medium transition">
+                        Отмена
+                    </button>
+                    <button onclick="saveBuilding()" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold transition">
+                        Сохранить
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal: Add/Edit Floor -->
+        <div id="modal-floor" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+                <h3 class="text-xl font-bold mb-4" id="modal-floor-title">Добавить этаж</h3>
+                <input type="hidden" id="edit-floor-id">
+                <input type="hidden" id="edit-floor-building">
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Номер этажа *</label>
+                        <input type="number" id="floor-number-input" placeholder="1" min="-2" max="50"
+                               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                        <p class="text-gray-400 text-xs mt-1">Отрицательные значения для подвальных этажей</p>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Название этажа</label>
+                        <input type="text" id="floor-name-input" placeholder="например: Цокольный этаж, Мезонин"
+                               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                        <p class="text-gray-400 text-xs mt-1">Оставьте пустым для стандартного названия</p>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Доступные зоны/крылья *</label>
+                        <div class="space-y-2" id="floor-zones-container">
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" id="floor-zone-left" value="left" checked class="w-5 h-5 rounded">
+                                <span>⬅️ Левое крыло</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" id="floor-zone-center" value="center" checked class="w-5 h-5 rounded">
+                                <span>🏛️ Центр / Холл</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" id="floor-zone-right" value="right" checked class="w-5 h-5 rounded">
+                                <span>➡️ Правое крыло</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Дополнительные зоны</label>
+                        <input type="text" id="floor-custom-zones-input" placeholder="например: северное крыло, южное крыло"
+                               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                        <p class="text-gray-400 text-xs mt-1">Через запятую, латинские ID</p>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Описание</label>
+                        <input type="text" id="floor-description-input" placeholder="например: Административный этаж"
+                               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" id="floor-has-elevator" class="w-5 h-5 rounded">
+                        <label for="floor-has-elevator" class="text-gray-700">🛗 Есть лифт на этом этаже</label>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button onclick="closeModal('floor')" class="flex-1 bg-gray-200 hover:bg-gray-300 py-3 rounded-xl font-medium transition">
+                        Отмена
+                    </button>
+                    <button onclick="saveFloor()" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold transition">
+                        Сохранить
+                    </button>
                 </div>
             </div>
         </div>
@@ -365,6 +565,12 @@
                 
                 <div class="space-y-4">
                     <div>
+                        <label class="block text-gray-700 font-medium mb-2">Корпус *</label>
+                        <select id="office-building-input" onchange="updateOfficeFloorOptions()" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                    <div>
                         <label class="block text-gray-700 font-medium mb-2">Номер кабинета *</label>
                         <input type="text" id="office-number-input" placeholder="например: 314"
                                class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
@@ -383,18 +589,14 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-gray-700 font-medium mb-2">Этаж *</label>
-                            <select id="office-floor-input" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
-                                <option value="1">1 этаж</option>
-                                <option value="2">2 этаж</option>
-                                <option value="3">3 этаж</option>
+                            <select id="office-floor-input" onchange="updateOfficeWingOptions()" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                                <!-- Populated by JS -->
                             </select>
                         </div>
                         <div>
-                            <label class="block text-gray-700 font-medium mb-2">Крыло *</label>
+                            <label class="block text-gray-700 font-medium mb-2">Зона/Крыло *</label>
                             <select id="office-wing-input" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
-                                <option value="left">Левое</option>
-                                <option value="center">Центр</option>
-                                <option value="right">Правое</option>
+                                <!-- Populated by JS -->
                             </select>
                         </div>
                     </div>
@@ -437,6 +639,43 @@
 
     <script>
         // ==================== DATA ====================
+        
+        // Buildings / Корпуса
+        let buildings = {
+            main: { 
+                name: "Главный корпус", 
+                short_name: "Главный",
+                address: "ул. Ленина, д. 1",
+                color: "blue",
+                connections: ["small"]
+            },
+            small: { 
+                name: "Малый корпус", 
+                short_name: "Малый",
+                address: "ул. Ленина, д. 1, стр. 2",
+                color: "green",
+                connections: ["main"]
+            },
+            diagnostic: {
+                name: "Диагностический корпус",
+                short_name: "Диагностика",
+                address: "ул. Ленина, д. 3",
+                color: "purple",
+                connections: []
+            }
+        };
+
+        // Floors / Этажи
+        let floors = {
+            "main_1": { building_id: "main", number: 1, name: "", zones: ["left", "center", "right"], custom_zones: [], description: "Регистратура, процедурные", has_elevator: true },
+            "main_2": { building_id: "main", number: 2, name: "", zones: ["left", "center", "right"], custom_zones: [], description: "Терапевты, офтальмология", has_elevator: true },
+            "main_3": { building_id: "main", number: 3, name: "", zones: ["left", "center", "right"], custom_zones: [], description: "Хирургия, кардиология", has_elevator: true },
+            "small_1": { building_id: "small", number: 1, name: "", zones: ["left", "center", "right"], custom_zones: [], description: "УЗИ-диагностика", has_elevator: false },
+            "small_2": { building_id: "small", number: 2, name: "", zones: ["left", "center", "right"], custom_zones: [], description: "Консультации специалистов", has_elevator: false },
+            "diagnostic_1": { building_id: "diagnostic", number: 1, name: "", zones: ["center"], custom_zones: [], description: "МРТ, КТ", has_elevator: true },
+            "diagnostic_2": { building_id: "diagnostic", number: 2, name: "", zones: ["left", "center"], custom_zones: [], description: "Расширенная лаборатория", has_elevator: true }
+        };
+        
         let specialties = {
             therapist: { name: "Терапевт", aliases: ["врач", "общий врач"], icon: "🩺" },
             ophthalmologist: { name: "Окулист", aliases: ["глазной врач", "офтальмолог", "глаза"], icon: "👁️" },
@@ -449,123 +688,296 @@
             dentist: { name: "Стоматолог", aliases: ["зубной врач", "зубы", "дантист"], icon: "🦷" },
             lab: { name: "Лаборатория (анализы)", aliases: ["анализы", "кровь", "забор крови"], icon: "🧪" },
             procedures: { name: "Процедурный кабинет", aliases: ["процедуры", "уколы", "капельница"], icon: "💉" },
-            xray: { name: "Рентген", aliases: ["рентгенография", "снимок"], icon: "☢️" }
+            xray: { name: "Рентген", aliases: ["рентгенография", "снимок"], icon: "☢️" },
+            mri: { name: "МРТ", aliases: ["томография", "магнитно-резонансная"], icon: "🧲" },
+            ct: { name: "КТ", aliases: ["компьютерная томография"], icon: "💻" }
         };
 
         let offices = {
-            "101": { floor: 1, wing: "left", specialty_id: "procedures", display_name: "Процедурный кабинет", node_id: "floor1_left_1", doctor_name: "", schedule: "Пн-Пт 8:00-14:00", is_active: true },
-            "102": { floor: 1, wing: "left", specialty_id: "lab", display_name: "Лаборатория", node_id: "floor1_left_2", doctor_name: "Петрова М.И.", schedule: "Пн-Пт 7:30-12:00", is_active: true },
-            "105": { floor: 1, wing: "right", specialty_id: "xray", display_name: "Кабинет рентгена", node_id: "floor1_right_1", doctor_name: "Сидоров К.П.", schedule: "Пн-Пт 9:00-17:00", is_active: true },
-            "201": { floor: 2, wing: "left", specialty_id: "therapist", display_name: "Терапевт (участок 1)", node_id: "floor2_left_1", doctor_name: "Козлова А.В.", schedule: "Пн-Пт 8:00-15:00", is_active: true },
-            "202": { floor: 2, wing: "left", specialty_id: "therapist", display_name: "Терапевт (участок 2)", node_id: "floor2_left_2", doctor_name: "Николаев Д.С.", schedule: "Пн-Пт 14:00-20:00", is_active: true },
-            "210": { floor: 2, wing: "right", specialty_id: "ophthalmologist", display_name: "Кабинет окулиста", node_id: "floor2_right_1", doctor_name: "Иванова А.С.", schedule: "Пн-Пт 9:00-15:00", is_active: true },
-            "212": { floor: 2, wing: "right", specialty_id: "ophthalmologist", display_name: "Окулист (детский)", node_id: "floor2_right_2", doctor_name: "Смирнова Е.В.", schedule: "Пн-Пт 10:00-16:00", is_active: true },
-            "215": { floor: 2, wing: "right", specialty_id: "ent", display_name: "ЛОР-кабинет", node_id: "floor2_right_3", doctor_name: "Васильев Н.А.", schedule: "Пн-Сб 9:00-18:00", is_active: true },
-            "301": { floor: 3, wing: "left", specialty_id: "surgeon", display_name: "Кабинет хирурга", node_id: "floor3_left_1", doctor_name: "Федоров С.П.", schedule: "Пн-Пт 8:00-14:00", is_active: true },
-            "305": { floor: 3, wing: "left", specialty_id: "traumatologist", display_name: "Травматолог", node_id: "floor3_left_2", doctor_name: "Орлов М.К.", schedule: "Пн-Пт 9:00-17:00", is_active: true },
-            "310": { floor: 3, wing: "right", specialty_id: "ultrasound", display_name: "УЗИ брюшной полости", node_id: "floor3_right_1", doctor_name: "Морозова Л.И.", schedule: "Пн-Пт 8:00-16:00", is_active: true },
-            "312": { floor: 3, wing: "right", specialty_id: "ultrasound", display_name: "УЗИ сердца (ЭхоКГ)", node_id: "floor3_right_2", doctor_name: "Белов А.Р.", schedule: "Пн-Сб 9:00-15:00", is_active: true },
-            "314": { floor: 3, wing: "right", specialty_id: "cardiologist", display_name: "Кабинет кардиолога", node_id: "floor3_right_3", doctor_name: "Романов В.Е.", schedule: "Пн-Пт 10:00-18:00", is_active: true },
-            "320": { floor: 3, wing: "center", specialty_id: "neurologist", display_name: "Невролог", node_id: "floor3_center_1", doctor_name: "Князева Т.С.", schedule: "Пн-Чт 9:00-16:00", is_active: true },
-            "118": { floor: 1, wing: "center", specialty_id: "dentist", display_name: "Стоматология", node_id: "floor1_center_1", doctor_name: "Зубов И.И.", schedule: "Пн-Пт 8:00-20:00", is_active: true }
-        };
-
-        // Navigation Graph
-        const navGraph = {
-            nodes: {
-                entrance: { floor: 1, name: "Главный вход" },
-                floor1_center: { floor: 1, name: "1 этаж - холл" },
-                floor1_left: { floor: 1, name: "1 этаж - левое крыло" },
-                floor1_right: { floor: 1, name: "1 этаж - правое крыло" },
-                floor1_left_1: { floor: 1, name: "Каб. 101" },
-                floor1_left_2: { floor: 1, name: "Каб. 102" },
-                floor1_right_1: { floor: 1, name: "Каб. 105" },
-                floor1_center_1: { floor: 1, name: "Каб. 118" },
-                stairs_1_2: { floor: 1, name: "Лестница 1-2 этаж" },
-                floor2_center: { floor: 2, name: "2 этаж - холл" },
-                floor2_left: { floor: 2, name: "2 этаж - левое крыло" },
-                floor2_right: { floor: 2, name: "2 этаж - правое крыло" },
-                floor2_left_1: { floor: 2, name: "Каб. 201" },
-                floor2_left_2: { floor: 2, name: "Каб. 202" },
-                floor2_right_1: { floor: 2, name: "Каб. 210" },
-                floor2_right_2: { floor: 2, name: "Каб. 212" },
-                floor2_right_3: { floor: 2, name: "Каб. 215" },
-                stairs_2_3: { floor: 2, name: "Лестница 2-3 этаж" },
-                floor3_center: { floor: 3, name: "3 этаж - холл" },
-                floor3_left: { floor: 3, name: "3 этаж - левое крыло" },
-                floor3_right: { floor: 3, name: "3 этаж - правое крыло" },
-                floor3_left_1: { floor: 3, name: "Каб. 301" },
-                floor3_left_2: { floor: 3, name: "Каб. 305" },
-                floor3_right_1: { floor: 3, name: "Каб. 310" },
-                floor3_right_2: { floor: 3, name: "Каб. 312" },
-                floor3_right_3: { floor: 3, name: "Каб. 314" },
-                floor3_center_1: { floor: 3, name: "Каб. 320" }
-            },
-            edges: [
-                ["entrance", "floor1_center"],
-                ["floor1_center", "floor1_left"],
-                ["floor1_center", "floor1_right"],
-                ["floor1_center", "stairs_1_2"],
-                ["floor1_center", "floor1_center_1"],
-                ["floor1_left", "floor1_left_1"],
-                ["floor1_left", "floor1_left_2"],
-                ["floor1_right", "floor1_right_1"],
-                ["stairs_1_2", "floor2_center"],
-                ["floor2_center", "floor2_left"],
-                ["floor2_center", "floor2_right"],
-                ["floor2_center", "stairs_2_3"],
-                ["floor2_left", "floor2_left_1"],
-                ["floor2_left", "floor2_left_2"],
-                ["floor2_right", "floor2_right_1"],
-                ["floor2_right", "floor2_right_2"],
-                ["floor2_right", "floor2_right_3"],
-                ["stairs_2_3", "floor3_center"],
-                ["floor3_center", "floor3_left"],
-                ["floor3_center", "floor3_right"],
-                ["floor3_center", "floor3_center_1"],
-                ["floor3_left", "floor3_left_1"],
-                ["floor3_left", "floor3_left_2"],
-                ["floor3_right", "floor3_right_1"],
-                ["floor3_right", "floor3_right_2"],
-                ["floor3_right", "floor3_right_3"]
-            ]
+            "main_101": { building_id: "main", floor: 1, wing: "left", specialty_id: "procedures", display_name: "Процедурный кабинет", doctor_name: "", schedule: "Пн-Пт 8:00-14:00", is_active: true },
+            "main_102": { building_id: "main", floor: 1, wing: "left", specialty_id: "lab", display_name: "Лаборатория", doctor_name: "Петрова М.И.", schedule: "Пн-Пт 7:30-12:00", is_active: true },
+            "main_105": { building_id: "main", floor: 1, wing: "right", specialty_id: "xray", display_name: "Кабинет рентгена", doctor_name: "Сидоров К.П.", schedule: "Пн-Пт 9:00-17:00", is_active: true },
+            "main_201": { building_id: "main", floor: 2, wing: "left", specialty_id: "therapist", display_name: "Терапевт (участок 1)", doctor_name: "Козлова А.В.", schedule: "Пн-Пт 8:00-15:00", is_active: true },
+            "main_202": { building_id: "main", floor: 2, wing: "left", specialty_id: "therapist", display_name: "Терапевт (участок 2)", doctor_name: "Николаев Д.С.", schedule: "Пн-Пт 14:00-20:00", is_active: true },
+            "main_210": { building_id: "main", floor: 2, wing: "right", specialty_id: "ophthalmologist", display_name: "Кабинет окулиста", doctor_name: "Иванова А.С.", schedule: "Пн-Пт 9:00-15:00", is_active: true },
+            "main_212": { building_id: "main", floor: 2, wing: "right", specialty_id: "ophthalmologist", display_name: "Окулист (детский)", doctor_name: "Смирнова Е.В.", schedule: "Пн-Пт 10:00-16:00", is_active: true },
+            "main_215": { building_id: "main", floor: 2, wing: "right", specialty_id: "ent", display_name: "ЛОР-кабинет", doctor_name: "Васильев Н.А.", schedule: "Пн-Сб 9:00-18:00", is_active: true },
+            "main_301": { building_id: "main", floor: 3, wing: "left", specialty_id: "surgeon", display_name: "Кабинет хирурга", doctor_name: "Федоров С.П.", schedule: "Пн-Пт 8:00-14:00", is_active: true },
+            "main_305": { building_id: "main", floor: 3, wing: "left", specialty_id: "traumatologist", display_name: "Травматолог", doctor_name: "Орлов М.К.", schedule: "Пн-Пт 9:00-17:00", is_active: true },
+            "main_314": { building_id: "main", floor: 3, wing: "right", specialty_id: "cardiologist", display_name: "Кабинет кардиолога", doctor_name: "Романов В.Е.", schedule: "Пн-Пт 10:00-18:00", is_active: true },
+            "main_320": { building_id: "main", floor: 3, wing: "center", specialty_id: "neurologist", display_name: "Невролог", doctor_name: "Князева Т.С.", schedule: "Пн-Чт 9:00-16:00", is_active: true },
+            "main_118": { building_id: "main", floor: 1, wing: "center", specialty_id: "dentist", display_name: "Стоматология", doctor_name: "Зубов И.И.", schedule: "Пн-Пт 8:00-20:00", is_active: true },
+            "small_101": { building_id: "small", floor: 1, wing: "left", specialty_id: "ultrasound", display_name: "УЗИ брюшной полости", doctor_name: "Морозова Л.И.", schedule: "Пн-Пт 8:00-16:00", is_active: true },
+            "small_102": { building_id: "small", floor: 1, wing: "right", specialty_id: "ultrasound", display_name: "УЗИ сердца (ЭхоКГ)", doctor_name: "Белов А.Р.", schedule: "Пн-Сб 9:00-15:00", is_active: true },
+            "small_201": { building_id: "small", floor: 2, wing: "left", specialty_id: "cardiologist", display_name: "Кардиолог (приём)", doctor_name: "Сердцев А.А.", schedule: "Пн-Пт 9:00-17:00", is_active: true },
+            "small_202": { building_id: "small", floor: 2, wing: "right", specialty_id: "neurologist", display_name: "Невролог (детский)", doctor_name: "Умнова Е.С.", schedule: "Пн-Пт 10:00-16:00", is_active: true },
+            "diagnostic_101": { building_id: "diagnostic", floor: 1, wing: "center", specialty_id: "mri", display_name: "Кабинет МРТ", doctor_name: "Лучев Р.А.", schedule: "Пн-Сб 8:00-20:00", is_active: true },
+            "diagnostic_102": { building_id: "diagnostic", floor: 1, wing: "center", specialty_id: "ct", display_name: "Кабинет КТ", doctor_name: "Томов К.К.", schedule: "Пн-Сб 8:00-20:00", is_active: true },
+            "diagnostic_201": { building_id: "diagnostic", floor: 2, wing: "left", specialty_id: "lab", display_name: "Лаборатория (расширенная)", doctor_name: "Анализова Т.Т.", schedule: "Пн-Пт 7:00-14:00", is_active: true }
         };
 
         // State
-        let currentLocation = "entrance";
+        let currentLocation = "main_entrance";
+        let currentBuilding = "main";
         let targetOffice = null;
         let selectedSpecialty = null;
+
+        // ==================== HELPER FUNCTIONS ====================
+        function getBuildingFloors(buildingId) {
+            return Object.entries(floors)
+                .filter(([id, f]) => f.building_id === buildingId)
+                .sort((a, b) => a[1].number - b[1].number);
+        }
+
+        function getFloorZones(buildingId, floorNum) {
+            const floorId = `${buildingId}_${floorNum}`;
+            const floor = floors[floorId];
+            if (!floor) return ['left', 'center', 'right'];
+            return [...(floor.zones || []), ...(floor.custom_zones || [])];
+        }
+
+        function getFloorDisplayName(buildingId, floorNum) {
+            const floorId = `${buildingId}_${floorNum}`;
+            const floor = floors[floorId];
+            if (floor && floor.name) return floor.name;
+            if (floorNum < 0) return `Подвал ${Math.abs(floorNum)}`;
+            if (floorNum === 0) return "Цокольный этаж";
+            return `${floorNum} этаж`;
+        }
+
+        function getZoneDisplayName(zone) {
+            const names = { 
+                left: '⬅️ Левое крыло', 
+                right: '➡️ Правое крыло', 
+                center: '🏛️ Центр/Холл',
+                north: '⬆️ Северное крыло',
+                south: '⬇️ Южное крыло'
+            };
+            return names[zone] || zone;
+        }
+
+        function getZoneShortName(zone) {
+            const names = { left: 'левое', right: 'правое', center: 'центр', north: 'северное', south: 'южное' };
+            return names[zone] || zone;
+        }
+
+        function getBuildingColorClass(color) {
+            const colors = { blue: 'bg-blue-500', green: 'bg-green-500', purple: 'bg-purple-500', orange: 'bg-orange-500', red: 'bg-red-500' };
+            return colors[color] || 'bg-gray-500';
+        }
+
+        function getBuildingBorderClass(color) {
+            const colors = { blue: 'border-blue-500', green: 'border-green-500', purple: 'border-purple-500', orange: 'border-orange-500', red: 'border-red-500' };
+            return colors[color] || 'border-gray-500';
+        }
+
+        // ==================== NAVIGATION GRAPH ====================
+        function generateNavGraph() {
+            const nodes = {};
+            const edges = [];
+            
+            for (const [buildingId, building] of Object.entries(buildings)) {
+                nodes[`${buildingId}_entrance`] = { building: buildingId, floor: 1, name: `${building.short_name || building.name} — Вход` };
+                
+                const buildingFloors = getBuildingFloors(buildingId);
+                const sortedFloorNums = buildingFloors.map(([id, f]) => f.number).sort((a, b) => a - b);
+                
+                for (const [floorId, floor] of buildingFloors) {
+                    const floorNum = floor.number;
+                    const floorName = getFloorDisplayName(buildingId, floorNum);
+                    
+                    nodes[`${buildingId}_floor${floorNum}_center`] = { building: buildingId, floor: floorNum, name: `${building.short_name} — ${floorName}, холл` };
+                    
+                    const allZones = [...(floor.zones || []), ...(floor.custom_zones || [])];
+                    for (const zone of allZones) {
+                        if (zone !== 'center') {
+                            nodes[`${buildingId}_floor${floorNum}_${zone}`] = { building: buildingId, floor: floorNum, name: `${building.short_name} — ${floorName}, ${getZoneShortName(zone)}` };
+                            edges.push([`${buildingId}_floor${floorNum}_center`, `${buildingId}_floor${floorNum}_${zone}`]);
+                        }
+                    }
+                    
+                    const floorIndex = sortedFloorNums.indexOf(floorNum);
+                    if (floorIndex < sortedFloorNums.length - 1) {
+                        const nextFloorNum = sortedFloorNums[floorIndex + 1];
+                        const stairsId = `${buildingId}_stairs_${floorNum}_${nextFloorNum}`;
+                        nodes[stairsId] = { building: buildingId, floor: floorNum, name: `${building.short_name} — лестница ${floorNum}→${nextFloorNum}` };
+                        edges.push([`${buildingId}_floor${floorNum}_center`, stairsId]);
+                        edges.push([stairsId, `${buildingId}_floor${nextFloorNum}_center`]);
+                    }
+                    
+                    if (floor.has_elevator) {
+                        const elevatorId = `${buildingId}_elevator_${floorNum}`;
+                        nodes[elevatorId] = { building: buildingId, floor: floorNum, name: `${building.short_name} — лифт, ${floorName}` };
+                        edges.push([`${buildingId}_floor${floorNum}_center`, elevatorId]);
+                        for (const [otherId, otherFloor] of buildingFloors) {
+                            if (otherFloor.has_elevator && otherFloor.number !== floorNum) {
+                                edges.push([elevatorId, `${buildingId}_elevator_${otherFloor.number}`]);
+                            }
+                        }
+                    }
+                }
+                
+                const firstFloor = sortedFloorNums.find(n => n >= 1) || sortedFloorNums[0] || 1;
+                edges.push([`${buildingId}_entrance`, `${buildingId}_floor${firstFloor}_center`]);
+            }
+            
+            for (const [officeId, office] of Object.entries(offices)) {
+                const nodeId = `office_${officeId}`;
+                const roomNum = officeId.split('_')[1];
+                nodes[nodeId] = { building: office.building_id, floor: office.floor, name: `Каб. ${roomNum}` };
+                const wingNode = `${office.building_id}_floor${office.floor}_${office.wing}`;
+                if (nodes[wingNode]) {
+                    edges.push([wingNode, nodeId]);
+                } else {
+                    edges.push([`${office.building_id}_floor${office.floor}_center`, nodeId]);
+                }
+            }
+            
+            for (const [buildingId, building] of Object.entries(buildings)) {
+                for (const connectedId of building.connections || []) {
+                    const transitionId = `transition_${buildingId}_${connectedId}`;
+                    const reverseId = `transition_${connectedId}_${buildingId}`;
+                    if (!nodes[transitionId] && !nodes[reverseId]) {
+                        nodes[transitionId] = { building: buildingId, floor: 1, name: `Переход в ${buildings[connectedId]?.short_name || connectedId}` };
+                        edges.push([`${buildingId}_floor1_center`, transitionId]);
+                        edges.push([transitionId, `${connectedId}_floor1_center`]);
+                    }
+                }
+            }
+            
+            return { nodes, edges };
+        }
+
+        let navGraph = generateNavGraph();
 
         // ==================== INIT ====================
         function init() {
             loadData();
+            navGraph = generateNavGraph();
+            renderBuildingButtons();
+            populateLocationSelect();
+            updateLocationDisplay();
             renderSpecialties();
+            renderAdminBuildings();
+            renderAdminFloors();
             renderAdminSpecialties();
             renderAdminOffices();
-            checkURLParams();
         }
 
         function loadData() {
+            const savedBuildings = localStorage.getItem('nav_buildings');
+            const savedFloors = localStorage.getItem('nav_floors');
             const savedSpecialties = localStorage.getItem('nav_specialties');
             const savedOffices = localStorage.getItem('nav_offices');
+            if (savedBuildings) buildings = JSON.parse(savedBuildings);
+            if (savedFloors) floors = JSON.parse(savedFloors);
             if (savedSpecialties) specialties = JSON.parse(savedSpecialties);
             if (savedOffices) offices = JSON.parse(savedOffices);
         }
 
         function saveData() {
+            localStorage.setItem('nav_buildings', JSON.stringify(buildings));
+            localStorage.setItem('nav_floors', JSON.stringify(floors));
             localStorage.setItem('nav_specialties', JSON.stringify(specialties));
             localStorage.setItem('nav_offices', JSON.stringify(offices));
         }
 
-        function checkURLParams() {
-            const params = new URLSearchParams(window.location.search);
-            if (params.has('from')) {
-                currentLocation = params.get('from');
-                updateLocationDisplay();
+        // ==================== BUILDING SELECTION ====================
+        function renderBuildingButtons() {
+            const container = document.getElementById('building-buttons');
+            if (!container) return;
+            
+            container.innerHTML = Object.entries(buildings).map(([id, building]) => {
+                const isActive = currentBuilding === id;
+                const colorClass = getBuildingColorClass(building.color);
+                const borderClass = getBuildingBorderClass(building.color);
+                return `
+                    <button onclick="selectBuilding('${id}')" 
+                            class="building-btn px-4 py-2 rounded-xl font-medium text-sm transition ${isActive ? colorClass + ' text-white shadow-lg' : 'bg-white/20 text-white border-2 border-white/30 hover:bg-white/30'}">
+                        ${building.short_name || building.name}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectBuilding(buildingId) {
+            currentBuilding = buildingId;
+            currentLocation = `${buildingId}_entrance`;
+            renderBuildingButtons();
+            populateLocationSelect();
+            updateLocationDisplay();
+        }
+
+        function populateLocationSelect() {
+            const select = document.getElementById('location-select');
+            const routeSelect = document.getElementById('route-location-select');
+            if (!select) return;
+            
+            let html = '';
+            for (const [buildingId, building] of Object.entries(buildings)) {
+                html += `<optgroup label="🏢 ${building.name}">`;
+                html += `<option value="${buildingId}_entrance" ${currentLocation === `${buildingId}_entrance` ? 'selected' : ''}>${building.short_name} — Вход</option>`;
+                
+                const buildingFloors = getBuildingFloors(buildingId);
+                for (const [floorId, floor] of buildingFloors) {
+                    const floorName = getFloorDisplayName(buildingId, floor.number);
+                    html += `<option value="${buildingId}_floor${floor.number}_center" ${currentLocation === `${buildingId}_floor${floor.number}_center` ? 'selected' : ''}>${building.short_name} — ${floorName}, холл</option>`;
+                    
+                    const allZones = [...(floor.zones || []), ...(floor.custom_zones || [])];
+                    for (const zone of allZones) {
+                        if (zone !== 'center') {
+                            const locId = `${buildingId}_floor${floor.number}_${zone}`;
+                            html += `<option value="${locId}" ${currentLocation === locId ? 'selected' : ''}>${building.short_name} — ${floorName}, ${getZoneShortName(zone)}</option>`;
+                        }
+                    }
+                }
+                html += '</optgroup>';
             }
-            if (params.has('target')) {
-                targetOffice = params.get('target');
-                buildRoute();
+            select.innerHTML = html;
+            if (routeSelect) routeSelect.innerHTML = html;
+        }
+
+        function updateCurrentLocation() {
+            const select = document.getElementById('location-select');
+            if (!select) return;
+            
+            currentLocation = select.value;
+            for (const buildingId of Object.keys(buildings)) {
+                if (currentLocation.startsWith(buildingId)) {
+                    currentBuilding = buildingId;
+                    break;
+                }
+            }
+            renderBuildingButtons();
+            updateLocationDisplay();
+        }
+
+        function updateLocationFromRoute() {
+            const select = document.getElementById('route-location-select');
+            if (!select) return;
+            
+            currentLocation = select.value;
+            for (const buildingId of Object.keys(buildings)) {
+                if (currentLocation.startsWith(buildingId)) {
+                    currentBuilding = buildingId;
+                    break;
+                }
+            }
+            
+            // Sync main location select
+            const mainSelect = document.getElementById('location-select');
+            if (mainSelect) mainSelect.value = currentLocation;
+            
+            renderBuildingButtons();
+            updateLocationDisplay();
+            if (targetOffice) buildRoute();
+        }
+
+        function updateLocationDisplay() {
+            const node = navGraph.nodes[currentLocation];
+            const textEl = document.getElementById('current-location-text');
+            if (textEl) {
+                textEl.textContent = node?.name || 'Неизвестная точка';
             }
         }
 
@@ -573,15 +985,10 @@
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-' + screenId).classList.add('active');
-            
-            if (screenId === 'specialties') {
-                renderSpecialties();
-            }
+            if (screenId === 'specialties') renderSpecialties();
         }
 
-        function showHelp() {
-            showScreen('help');
-        }
+        function showHelp() { showScreen('help'); }
 
         // ==================== SPECIALTIES ====================
         function renderSpecialties() {
@@ -590,13 +997,10 @@
             
             let html = '';
             for (const [id, spec] of Object.entries(specialties)) {
-                const matches = spec.name.toLowerCase().includes(search) ||
-                               spec.aliases.some(a => a.toLowerCase().includes(search));
-                
+                const matches = spec.name.toLowerCase().includes(search) || spec.aliases.some(a => a.toLowerCase().includes(search));
                 if (search && !matches) continue;
                 
                 const officeCount = Object.values(offices).filter(o => o.specialty_id === id).length;
-                
                 html += `
                     <button onclick="selectSpecialty('${id}')" 
                             class="btn-specialty w-full bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 rounded-2xl p-4 text-left transition flex items-center gap-4">
@@ -611,17 +1015,10 @@
                     </button>
                 `;
             }
-            
-            if (!html) {
-                html = '<p class="text-gray-500 text-center py-8">Ничего не найдено</p>';
-            }
-            
-            container.innerHTML = html;
+            container.innerHTML = html || '<p class="text-gray-500 text-center py-8">Ничего не найдено</p>';
         }
 
-        function filterSpecialties() {
-            renderSpecialties();
-        }
+        function filterSpecialties() { renderSpecialties(); }
 
         function getOfficeWord(count) {
             if (count === 1) return 'кабинет';
@@ -631,91 +1028,92 @@
 
         function selectSpecialty(specId) {
             selectedSpecialty = specId;
-            const specOffices = Object.entries(offices).filter(([num, o]) => o.specialty_id === specId);
+            const specOffices = Object.entries(offices).filter(([id, o]) => o.specialty_id === specId);
             
-            if (specOffices.length === 0) {
-                showToast('Кабинеты не найдены');
-                return;
-            }
+            if (specOffices.length === 0) { showToast('Кабинеты не найдены'); return; }
+            if (specOffices.length === 1) { targetOffice = specOffices[0][0]; buildRoute(); return; }
             
-            if (specOffices.length === 1) {
-                targetOffice = specOffices[0][0];
-                buildRoute();
-                return;
-            }
-            
-            // Show room selection
-            document.getElementById('rooms-specialty-name').textContent = 
-                `${specialties[specId].name} — выберите кабинет:`;
+            document.getElementById('rooms-specialty-name').textContent = `${specialties[specId].name} — выберите кабинет:`;
             
             const container = document.getElementById('room-list');
-            container.innerHTML = specOffices.map(([num, office]) => `
-                <button onclick="selectRoom('${num}')" 
-                        class="w-full bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 rounded-2xl p-4 text-left transition">
+            container.innerHTML = specOffices.map(([id, office]) => {
+                const building = buildings[office.building_id];
+                const roomNum = id.split('_')[1];
+                const colorClass = getBuildingColorClass(building?.color);
+                const floorName = getFloorDisplayName(office.building_id, office.floor);
+                return `
+                <button onclick="selectRoom('${id}')" class="w-full bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 rounded-2xl p-4 text-left transition">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="font-bold text-xl text-gray-800">Кабинет ${num}</p>
+                            <p class="font-bold text-xl text-gray-800">Кабинет ${roomNum}</p>
                             <p class="text-gray-600">${office.display_name}</p>
-                            <p class="text-gray-400 text-sm">${office.floor} этаж, ${getWingName(office.wing)} крыло</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="inline-block px-2 py-0.5 ${colorClass} text-white text-xs rounded-full">${building?.short_name || office.building_id}</span>
+                                <span class="text-gray-400 text-sm">${floorName}, ${getZoneShortName(office.wing)}</span>
+                            </div>
                         </div>
                         <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                         </svg>
                     </div>
                 </button>
-            `).join('');
-            
+            `}).join('');
             showScreen('rooms');
         }
 
-        function selectRoom(roomNum) {
-            targetOffice = roomNum;
-            buildRoute();
-        }
-
-        function getWingName(wing) {
-            const names = { left: 'левое', right: 'правое', center: 'центральное' };
-            return names[wing] || wing;
-        }
+        function selectRoom(officeId) { targetOffice = officeId; buildRoute(); }
 
         // ==================== ROOM SEARCH ====================
         function searchByRoom() {
             const input = document.getElementById('room-input').value.trim();
-            if (!input) {
-                showToast('Введите номер кабинета');
-                return;
-            }
+            if (!input) { showToast('Введите номер кабинета'); return; }
             
-            if (!offices[input]) {
-                showToast('Кабинет не найден');
-                return;
-            }
+            const matchingOffices = Object.entries(offices).filter(([id, o]) => id.split('_')[1] === input);
             
-            targetOffice = input;
-            buildRoute();
+            if (matchingOffices.length === 0) { showToast('Кабинет не найден'); return; }
+            if (matchingOffices.length === 1) { targetOffice = matchingOffices[0][0]; buildRoute(); return; }
+            
+            document.getElementById('rooms-specialty-name').textContent = `Кабинет ${input} — выберите корпус:`;
+            
+            const container = document.getElementById('room-list');
+            container.innerHTML = matchingOffices.map(([id, office]) => {
+                const building = buildings[office.building_id];
+                const colorClass = getBuildingColorClass(building?.color);
+                const floorName = getFloorDisplayName(office.building_id, office.floor);
+                return `
+                <button onclick="selectRoom('${id}')" class="w-full bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 rounded-2xl p-4 text-left transition">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-xl text-gray-800">${building?.name || office.building_id}</p>
+                            <p class="text-gray-600">${office.display_name}</p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="inline-block px-2 py-0.5 ${colorClass} text-white text-xs rounded-full">${floorName}</span>
+                                <span class="text-gray-400 text-sm">${getZoneShortName(office.wing)}</span>
+                            </div>
+                        </div>
+                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </button>
+            `}).join('');
+            showScreen('rooms');
         }
 
         // ==================== ROUTING ====================
         function buildRoute() {
-            if (!targetOffice || !offices[targetOffice]) {
-                showToast('Кабинет не найден');
-                return;
-            }
+            if (!targetOffice || !offices[targetOffice]) { showToast('Кабинет не найден'); return; }
             
             const office = offices[targetOffice];
-            const targetNode = office.node_id;
+            const targetNode = `office_${targetOffice}`;
+            const building = buildings[office.building_id];
+            const roomNum = targetOffice.split('_')[1];
             
-            // Find path using BFS
             const path = findPath(currentLocation, targetNode);
+            if (!path) { showToast('Не удалось построить маршрут'); return; }
             
-            if (!path) {
-                showToast('Не удалось построить маршрут');
-                return;
-            }
-            
-            // Display route
-            document.getElementById('route-target').textContent = 
-                `Кабинет ${targetOffice} — ${office.display_name}`;
+            document.getElementById('route-target').textContent = `Кабинет ${roomNum} — ${office.display_name}`;
+            document.getElementById('route-building').textContent = `🏢 ${building?.name || office.building_id}`;
             
             const stepsContainer = document.getElementById('route-steps');
             const steps = generateInstructions(path, office);
@@ -731,20 +1129,22 @@
                 </div>
             `).join('');
             
-            document.getElementById('simulate-location').value = currentLocation;
+            // Update route location select
+            const routeSelect = document.getElementById('route-location-select');
+            if (routeSelect) routeSelect.value = currentLocation;
+            
             showScreen('route');
         }
 
         function findPath(start, end) {
             if (start === end) return [start];
+            navGraph = generateNavGraph();
             
             const adjacency = {};
-            for (const node of Object.keys(navGraph.nodes)) {
-                adjacency[node] = [];
-            }
+            for (const node of Object.keys(navGraph.nodes)) adjacency[node] = [];
             for (const [a, b] of navGraph.edges) {
-                adjacency[a].push(b);
-                adjacency[b].push(a);
+                if (adjacency[a]) adjacency[a].push(b);
+                if (adjacency[b]) adjacency[b].push(a);
             }
             
             const queue = [[start]];
@@ -753,9 +1153,7 @@
             while (queue.length > 0) {
                 const path = queue.shift();
                 const node = path[path.length - 1];
-                
                 if (node === end) return path;
-                
                 for (const neighbor of adjacency[node] || []) {
                     if (!visited.has(neighbor)) {
                         visited.add(neighbor);
@@ -763,82 +1161,370 @@
                     }
                 }
             }
-            
             return null;
         }
 
         function generateInstructions(path, targetOffice) {
             const instructions = [];
             let prevFloor = navGraph.nodes[path[0]]?.floor || 1;
+            let prevBuilding = navGraph.nodes[path[0]]?.building || currentBuilding;
             
             for (let i = 0; i < path.length; i++) {
                 const node = path[i];
                 const nodeData = navGraph.nodes[node];
                 const floor = nodeData?.floor || 1;
+                const building = nodeData?.building || currentBuilding;
                 
-                if (i === 0) {
-                    instructions.push(`Вы находитесь: ${nodeData?.name || node}`);
-                    continue;
+                if (i === 0) { instructions.push(`📍 Вы находитесь: ${nodeData?.name || node}`); continue; }
+                
+                if (building !== prevBuilding) {
+                    instructions.push(`🚶 Перейдите в ${buildings[building]?.name || building}`);
+                    prevBuilding = building;
                 }
                 
-                if (floor > prevFloor) {
-                    instructions.push(`⬆️ Поднимитесь на ${floor} этаж`);
+                if (node.includes('_elevator_')) {
+                    if (floor !== prevFloor) {
+                        instructions.push(`🛗 На лифте на ${getFloorDisplayName(building, floor)}`);
+                    }
+                } else if (floor > prevFloor) {
+                    instructions.push(`⬆️ Поднимитесь на ${getFloorDisplayName(building, floor)}`);
                 } else if (floor < prevFloor) {
-                    instructions.push(`⬇️ Спуститесь на ${floor} этаж`);
+                    instructions.push(`⬇️ Спуститесь на ${getFloorDisplayName(building, floor)}`);
                 }
                 
-                if (node.includes('left') && !node.includes('_left_')) {
-                    instructions.push(`⬅️ Идите в левое крыло`);
-                } else if (node.includes('right') && !node.includes('_right_')) {
-                    instructions.push(`➡️ Идите в правое крыло`);
-                } else if (node.includes('center') && !node.includes('_center_') && i > 0) {
-                    instructions.push(`⬆️ Пройдите в центральный холл`);
+                const zoneMatch = node.match(/_floor\d+_(\w+)$/);
+                if (zoneMatch && zoneMatch[1] !== 'center' && !node.includes('office_')) {
+                    instructions.push(`${getZoneIcon(zoneMatch[1])} Идите в ${getZoneShortName(zoneMatch[1])} крыло`);
                 }
-                
                 prevFloor = floor;
             }
             
-            instructions.push(`🎯 Кабинет ${targetOffice.display_name ? `"${targetOffice.display_name}"` : ''} справа`);
-            
+            instructions.push(`🎯 Кабинет "${targetOffice.display_name}" — вы на месте!`);
             return instructions;
         }
 
-        function updateLocation() {
-            currentLocation = document.getElementById('simulate-location').value;
-            updateLocationDisplay();
-            buildRoute();
-        }
-
-        function updateLocationDisplay() {
-            const node = navGraph.nodes[currentLocation];
-            document.getElementById('current-location').textContent = 
-                `📍 ${node?.name || 'Неизвестная точка'}`;
+        function getZoneIcon(zone) {
+            const icons = { left: '⬅️', right: '➡️', center: '🏛️', north: '⬆️', south: '⬇️' };
+            return icons[zone] || '➡️';
         }
 
         // ==================== ADMIN ====================
         function adminLogin() {
-            const password = document.getElementById('admin-password').value;
-            if (password === 'admin') {
+            if (document.getElementById('admin-password').value === 'admin') {
                 showScreen('admin');
+                renderAdminBuildings();
+                populateFloorBuildingSelect();
+                renderAdminFloors();
                 renderAdminSpecialties();
                 renderAdminOffices();
+                populateBuildingSelects();
             } else {
                 showToast('Неверный пароль');
             }
         }
 
         function switchAdminTab(tab) {
-            document.getElementById('tab-specialties').className = 
-                `flex-1 py-3 px-4 rounded-xl font-medium transition ${tab === 'specialties' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`;
-            document.getElementById('tab-offices').className = 
-                `flex-1 py-3 px-4 rounded-xl font-medium transition ${tab === 'offices' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`;
-            
-            document.getElementById('admin-specialties').classList.toggle('hidden', tab !== 'specialties');
-            document.getElementById('admin-offices').classList.toggle('hidden', tab !== 'offices');
+            ['buildings', 'floors', 'specialties', 'offices'].forEach(t => {
+                const tabBtn = document.getElementById('tab-' + t);
+                const content = document.getElementById('admin-' + t);
+                if (t === tab) {
+                    tabBtn.className = 'flex-1 py-2 px-2 rounded-lg font-medium transition text-xs bg-white shadow text-gray-800 whitespace-nowrap';
+                    content.classList.remove('hidden');
+                } else {
+                    tabBtn.className = 'flex-1 py-2 px-2 rounded-lg font-medium transition text-xs text-gray-600 whitespace-nowrap';
+                    content.classList.add('hidden');
+                }
+            });
+            if (tab === 'floors') { populateFloorBuildingSelect(); renderAdminFloors(); }
+            if (tab === 'offices') populateBuildingSelects();
         }
 
+        function populateBuildingSelects() {
+            const officeSelect = document.getElementById('office-building-input');
+            if (officeSelect) officeSelect.innerHTML = Object.entries(buildings).map(([id, b]) => `<option value="${id}">${b.name}</option>`).join('');
+            
+            const filterSelect = document.getElementById('admin-office-filter');
+            if (filterSelect) filterSelect.innerHTML = '<option value="">Все корпуса</option>' + Object.entries(buildings).map(([id, b]) => `<option value="${id}">${b.name}</option>`).join('');
+            
+            const connSelect = document.getElementById('building-connection-input');
+            if (connSelect) {
+                const editId = document.getElementById('edit-building-id')?.value;
+                connSelect.innerHTML = '<option value="">Нет связи (отдельное здание)</option>' + Object.entries(buildings).filter(([id]) => id !== editId).map(([id, b]) => `<option value="${id}">${b.name}</option>`).join('');
+            }
+        }
+
+        function populateFloorBuildingSelect() {
+            const select = document.getElementById('admin-floor-building-select');
+            if (select) {
+                const currentValue = select.value;
+                select.innerHTML = Object.entries(buildings).map(([id, b]) => `<option value="${id}">${b.name}</option>`).join('');
+                if (currentValue && buildings[currentValue]) select.value = currentValue;
+            }
+        }
+
+        // ==================== ADMIN: BUILDINGS ====================
+        function renderAdminBuildings() {
+            const container = document.getElementById('admin-building-list');
+            if (!container) return;
+            
+            container.innerHTML = Object.entries(buildings).map(([id, building]) => {
+                const colorClass = getBuildingColorClass(building.color);
+                const officeCount = Object.values(offices).filter(o => o.building_id === id).length;
+                const floorCount = getBuildingFloors(id).length;
+                return `
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-3">
+                            <span class="w-4 h-4 rounded-full ${colorClass}"></span>
+                            <p class="font-bold text-lg text-gray-800">${building.name}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="editBuilding('${id}')" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            </button>
+                            <button onclick="deleteBuilding('${id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-gray-500 text-sm">${floorCount} ${getFloorWord(floorCount)} • ${officeCount} ${getOfficeWord(officeCount)}</p>
+                    ${building.address ? `<p class="text-gray-400 text-sm">${building.address}</p>` : ''}
+                    ${building.connections?.length ? `<p class="text-blue-500 text-sm mt-1">🔗 Связь: ${building.connections.map(c => buildings[c]?.short_name || c).join(', ')}</p>` : ''}
+                </div>
+            `}).join('');
+        }
+
+        function getFloorWord(count) {
+            if (count === 1) return 'этаж';
+            if (count >= 2 && count <= 4) return 'этажа';
+            return 'этажей';
+        }
+
+        function showAddBuilding() {
+            document.getElementById('modal-building-title').textContent = 'Добавить корпус';
+            document.getElementById('edit-building-id').value = '';
+            document.getElementById('building-id-input').value = '';
+            document.getElementById('building-id-input').disabled = false;
+            document.getElementById('building-name-input').value = '';
+            document.getElementById('building-short-input').value = '';
+            document.getElementById('building-address-input').value = '';
+            document.getElementById('building-color-input').value = 'blue';
+            populateBuildingSelects();
+            document.getElementById('building-connection-input').value = '';
+            document.getElementById('modal-building').classList.remove('hidden');
+        }
+
+        function editBuilding(id) {
+            const building = buildings[id];
+            document.getElementById('modal-building-title').textContent = 'Редактировать корпус';
+            document.getElementById('edit-building-id').value = id;
+            document.getElementById('building-id-input').value = id;
+            document.getElementById('building-id-input').disabled = true;
+            document.getElementById('building-name-input').value = building.name;
+            document.getElementById('building-short-input').value = building.short_name || '';
+            document.getElementById('building-address-input').value = building.address || '';
+            document.getElementById('building-color-input').value = building.color || 'blue';
+            populateBuildingSelects();
+            document.getElementById('building-connection-input').value = building.connections?.[0] || '';
+            document.getElementById('modal-building').classList.remove('hidden');
+        }
+
+        function saveBuilding() {
+            const editId = document.getElementById('edit-building-id').value;
+            const id = editId || document.getElementById('building-id-input').value.trim().toLowerCase();
+            const name = document.getElementById('building-name-input').value.trim();
+            const shortName = document.getElementById('building-short-input').value.trim();
+            const address = document.getElementById('building-address-input').value.trim();
+            const color = document.getElementById('building-color-input').value;
+            const connection = document.getElementById('building-connection-input').value;
+            
+            if (!id || !name) { showToast('Заполните обязательные поля'); return; }
+            
+            const isNew = !buildings[id];
+            buildings[id] = { name, short_name: shortName || name, address, color, connections: connection ? [connection] : [] };
+            
+            if (isNew) {
+                floors[`${id}_1`] = { building_id: id, number: 1, name: "", zones: ["left", "center", "right"], custom_zones: [], description: "", has_elevator: false };
+            }
+            
+            if (connection && buildings[connection]) {
+                if (!buildings[connection].connections) buildings[connection].connections = [];
+                if (!buildings[connection].connections.includes(id)) buildings[connection].connections.push(id);
+            }
+            
+            navGraph = generateNavGraph();
+            saveData();
+            closeModal('building');
+            renderAdminBuildings();
+            renderBuildingButtons();
+            populateLocationSelect();
+            showToast('Корпус сохранён');
+        }
+
+        function deleteBuilding(id) {
+            const officeCount = Object.values(offices).filter(o => o.building_id === id).length;
+            if (officeCount > 0) { showToast(`Нельзя удалить: есть ${officeCount} ${getOfficeWord(officeCount)}`); return; }
+            
+            if (confirm(`Удалить корпус "${buildings[id].name}"?`)) {
+                for (const floorId of Object.keys(floors)) {
+                    if (floors[floorId].building_id === id) delete floors[floorId];
+                }
+                for (const b of Object.values(buildings)) {
+                    if (b.connections) b.connections = b.connections.filter(c => c !== id);
+                }
+                delete buildings[id];
+                if (currentBuilding === id) {
+                    currentBuilding = Object.keys(buildings)[0] || 'main';
+                    currentLocation = `${currentBuilding}_entrance`;
+                }
+                navGraph = generateNavGraph();
+                saveData();
+                renderAdminBuildings();
+                renderBuildingButtons();
+                populateLocationSelect();
+                showToast('Корпус удалён');
+            }
+        }
+
+        // ==================== ADMIN: FLOORS ====================
+        function renderAdminFloors() {
+            const container = document.getElementById('admin-floor-list');
+            const buildingId = document.getElementById('admin-floor-building-select')?.value;
+            if (!container || !buildingId) return;
+            
+            const buildingFloors = getBuildingFloors(buildingId);
+            if (buildingFloors.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">Нет этажей. Добавьте первый этаж.</p>';
+                return;
+            }
+            
+            container.innerHTML = buildingFloors.map(([floorId, floor]) => {
+                const floorName = floor.name || `${floor.number} этаж`;
+                const officeCount = Object.values(offices).filter(o => o.building_id === buildingId && o.floor === floor.number).length;
+                const allZones = [...(floor.zones || []), ...(floor.custom_zones || [])];
+                
+                return `
+                <div class="floor-card bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-3">
+                            <span class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-bold text-lg">${floor.number}</span>
+                            <div>
+                                <p class="font-bold text-gray-800">${floorName}</p>
+                                ${floor.description ? `<p class="text-gray-400 text-sm">${floor.description}</p>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="editFloor('${floorId}')" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            </button>
+                            <button onclick="deleteFloor('${floorId}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        ${allZones.map(z => `<span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">${getZoneShortName(z)}</span>`).join('')}
+                        ${floor.has_elevator ? '<span class="px-2 py-1 bg-blue-100 text-blue-600 text-xs rounded-full">🛗 Лифт</span>' : ''}
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">${officeCount} ${getOfficeWord(officeCount)}</p>
+                </div>
+            `}).join('');
+        }
+
+        function showAddFloor() {
+            const buildingId = document.getElementById('admin-floor-building-select')?.value;
+            if (!buildingId) { showToast('Сначала выберите корпус'); return; }
+            
+            document.getElementById('modal-floor-title').textContent = 'Добавить этаж';
+            document.getElementById('edit-floor-id').value = '';
+            document.getElementById('edit-floor-building').value = buildingId;
+            document.getElementById('floor-number-input').value = '';
+            document.getElementById('floor-number-input').disabled = false;
+            document.getElementById('floor-name-input').value = '';
+            document.getElementById('floor-zone-left').checked = true;
+            document.getElementById('floor-zone-center').checked = true;
+            document.getElementById('floor-zone-right').checked = true;
+            document.getElementById('floor-custom-zones-input').value = '';
+            document.getElementById('floor-description-input').value = '';
+            document.getElementById('floor-has-elevator').checked = false;
+            document.getElementById('modal-floor').classList.remove('hidden');
+        }
+
+        function editFloor(floorId) {
+            const floor = floors[floorId];
+            if (!floor) return;
+            
+            document.getElementById('modal-floor-title').textContent = 'Редактировать этаж';
+            document.getElementById('edit-floor-id').value = floorId;
+            document.getElementById('edit-floor-building').value = floor.building_id;
+            document.getElementById('floor-number-input').value = floor.number;
+            document.getElementById('floor-number-input').disabled = true;
+            document.getElementById('floor-name-input').value = floor.name || '';
+            document.getElementById('floor-zone-left').checked = (floor.zones || []).includes('left');
+            document.getElementById('floor-zone-center').checked = (floor.zones || []).includes('center');
+            document.getElementById('floor-zone-right').checked = (floor.zones || []).includes('right');
+            document.getElementById('floor-custom-zones-input').value = (floor.custom_zones || []).join(', ');
+            document.getElementById('floor-description-input').value = floor.description || '';
+            document.getElementById('floor-has-elevator').checked = floor.has_elevator || false;
+            document.getElementById('modal-floor').classList.remove('hidden');
+        }
+
+        function saveFloor() {
+            const editId = document.getElementById('edit-floor-id').value;
+            const buildingId = document.getElementById('edit-floor-building').value;
+            const number = parseInt(document.getElementById('floor-number-input').value);
+            const name = document.getElementById('floor-name-input').value.trim();
+            const description = document.getElementById('floor-description-input').value.trim();
+            const hasElevator = document.getElementById('floor-has-elevator').checked;
+            
+            if (isNaN(number)) { showToast('Введите номер этажа'); return; }
+            
+            const zones = [];
+            if (document.getElementById('floor-zone-left').checked) zones.push('left');
+            if (document.getElementById('floor-zone-center').checked) zones.push('center');
+            if (document.getElementById('floor-zone-right').checked) zones.push('right');
+            
+            const customZones = document.getElementById('floor-custom-zones-input').value.split(',').map(z => z.trim().toLowerCase()).filter(z => z);
+            
+            if (zones.length === 0 && customZones.length === 0) { showToast('Выберите хотя бы одну зону'); return; }
+            
+            const floorId = editId || `${buildingId}_${number}`;
+            if (!editId && floors[floorId]) { showToast('Этаж с таким номером уже существует'); return; }
+            
+            floors[floorId] = { building_id: buildingId, number, name, zones, custom_zones: customZones, description, has_elevator: hasElevator };
+            
+            navGraph = generateNavGraph();
+            saveData();
+            closeModal('floor');
+            renderAdminFloors();
+            renderAdminBuildings();
+            populateLocationSelect();
+            showToast('Этаж сохранён');
+        }
+
+        function deleteFloor(floorId) {
+            const floor = floors[floorId];
+            if (!floor) return;
+            
+            const officeCount = Object.values(offices).filter(o => o.building_id === floor.building_id && o.floor === floor.number).length;
+            if (officeCount > 0) { showToast(`Нельзя удалить: есть ${officeCount} ${getOfficeWord(officeCount)}`); return; }
+            
+            if (confirm(`Удалить "${floor.name || floor.number + ' этаж'}"?`)) {
+                delete floors[floorId];
+                navGraph = generateNavGraph();
+                saveData();
+                renderAdminFloors();
+                renderAdminBuildings();
+                populateLocationSelect();
+                showToast('Этаж удалён');
+            }
+        }
+
+        // ==================== ADMIN: SPECIALTIES ====================
         function renderAdminSpecialties() {
             const container = document.getElementById('admin-specialty-list');
+            if (!container) return;
+            
             container.innerHTML = Object.entries(specialties).map(([id, spec]) => `
                 <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex items-center justify-between">
                     <div class="flex items-center gap-3">
@@ -850,47 +1536,16 @@
                     </div>
                     <div class="flex gap-2">
                         <button onclick="editSpecialty('${id}')" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                            </svg>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                         </button>
                         <button onclick="deleteSpecialty('${id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                         </button>
                     </div>
                 </div>
             `).join('');
         }
 
-        function renderAdminOffices() {
-            const container = document.getElementById('admin-office-list');
-            container.innerHTML = Object.entries(offices).map(([num, office]) => `
-                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                    <div class="flex items-center justify-between mb-2">
-                        <p class="font-bold text-lg text-gray-800">Кабинет ${num}</p>
-                        <div class="flex gap-2">
-                            <button onclick="editOffice('${num}')" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                </svg>
-                            </button>
-                            <button onclick="deleteOffice('${num}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <p class="text-gray-600">${office.display_name}</p>
-                    <p class="text-gray-400 text-sm">${office.floor} этаж, ${getWingName(office.wing)} крыло • ${specialties[office.specialty_id]?.name || office.specialty_id}</p>
-                    ${office.doctor_name ? `<p class="text-gray-400 text-sm mt-1">👨‍⚕️ ${office.doctor_name}</p>` : ''}
-                </div>
-            `).join('');
-        }
-
-        // Specialty Modal
         function showAddSpecialty() {
             document.getElementById('modal-specialty-title').textContent = 'Добавить специальность';
             document.getElementById('edit-specialty-id').value = '';
@@ -921,10 +1576,7 @@
             const aliases = document.getElementById('specialty-aliases-input').value.split(',').map(a => a.trim()).filter(a => a);
             const icon = document.getElementById('specialty-icon-input').value.trim() || '🏥';
             
-            if (!id || !name) {
-                showToast('Заполните обязательные поля');
-                return;
-            }
+            if (!id || !name) { showToast('Заполните обязательные поля'); return; }
             
             specialties[id] = { name, aliases, icon };
             saveData();
@@ -944,48 +1596,112 @@
             }
         }
 
-        // Office Modal
+        // ==================== ADMIN: OFFICES ====================
+        function renderAdminOffices() {
+            const container = document.getElementById('admin-office-list');
+            if (!container) return;
+            
+            const filterBuilding = document.getElementById('admin-office-filter')?.value || '';
+            const filteredOffices = Object.entries(offices).filter(([id, o]) => !filterBuilding || o.building_id === filterBuilding);
+            
+            container.innerHTML = filteredOffices.map(([id, office]) => {
+                const building = buildings[office.building_id];
+                const colorClass = getBuildingColorClass(building?.color);
+                const roomNum = id.split('_')[1];
+                const floorName = getFloorDisplayName(office.building_id, office.floor);
+                return `
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-block px-2 py-0.5 ${colorClass} text-white text-xs rounded-full">${building?.short_name || office.building_id}</span>
+                            <p class="font-bold text-lg text-gray-800">Каб. ${roomNum}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="editOffice('${id}')" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            </button>
+                            <button onclick="deleteOffice('${id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-gray-600">${office.display_name}</p>
+                    <p class="text-gray-400 text-sm">${floorName}, ${getZoneShortName(office.wing)} • ${specialties[office.specialty_id]?.name || office.specialty_id}</p>
+                    ${office.doctor_name ? `<p class="text-gray-400 text-sm mt-1">👨‍⚕️ ${office.doctor_name}</p>` : ''}
+                </div>
+            `}).join('');
+            
+            if (filteredOffices.length === 0) container.innerHTML = '<p class="text-gray-500 text-center py-8">Нет кабинетов</p>';
+        }
+
         function showAddOffice() {
             document.getElementById('modal-office-title').textContent = 'Добавить кабинет';
             document.getElementById('edit-office-id').value = '';
             document.getElementById('office-number-input').value = '';
             document.getElementById('office-number-input').disabled = false;
             document.getElementById('office-name-input').value = '';
-            document.getElementById('office-floor-input').value = '1';
-            document.getElementById('office-wing-input').value = 'left';
             document.getElementById('office-doctor-input').value = '';
             document.getElementById('office-schedule-input').value = '';
             document.getElementById('office-active-input').checked = true;
+            populateBuildingSelects();
             populateSpecialtySelect();
+            updateOfficeFloorOptions();
             document.getElementById('modal-office').classList.remove('hidden');
         }
 
-        function editOffice(num) {
-            const office = offices[num];
+        function editOffice(id) {
+            const office = offices[id];
+            const roomNum = id.split('_')[1];
             document.getElementById('modal-office-title').textContent = 'Редактировать кабинет';
-            document.getElementById('edit-office-id').value = num;
-            document.getElementById('office-number-input').value = num;
+            document.getElementById('edit-office-id').value = id;
+            document.getElementById('office-number-input').value = roomNum;
             document.getElementById('office-number-input').disabled = true;
             document.getElementById('office-name-input').value = office.display_name || '';
-            document.getElementById('office-floor-input').value = office.floor;
-            document.getElementById('office-wing-input').value = office.wing;
             document.getElementById('office-doctor-input').value = office.doctor_name || '';
             document.getElementById('office-schedule-input').value = office.schedule || '';
             document.getElementById('office-active-input').checked = office.is_active !== false;
+            populateBuildingSelects();
+            document.getElementById('office-building-input').value = office.building_id;
             populateSpecialtySelect(office.specialty_id);
+            updateOfficeFloorOptions();
+            document.getElementById('office-floor-input').value = office.floor;
+            updateOfficeWingOptions();
+            document.getElementById('office-wing-input').value = office.wing;
             document.getElementById('modal-office').classList.remove('hidden');
+        }
+
+        function updateOfficeFloorOptions() {
+            const buildingId = document.getElementById('office-building-input')?.value;
+            const buildingFloors = getBuildingFloors(buildingId);
+            const select = document.getElementById('office-floor-input');
+            const currentValue = select.value;
+            
+            select.innerHTML = buildingFloors.map(([id, floor]) => `<option value="${floor.number}">${getFloorDisplayName(buildingId, floor.number)}</option>`).join('');
+            
+            if (buildingFloors.some(([id, f]) => f.number === parseInt(currentValue))) select.value = currentValue;
+            updateOfficeWingOptions();
+        }
+
+        function updateOfficeWingOptions() {
+            const buildingId = document.getElementById('office-building-input')?.value;
+            const floorNum = parseInt(document.getElementById('office-floor-input')?.value);
+            const zones = getFloorZones(buildingId, floorNum);
+            const select = document.getElementById('office-wing-input');
+            const currentValue = select.value;
+            
+            select.innerHTML = zones.map(zone => `<option value="${zone}">${getZoneDisplayName(zone)}</option>`).join('');
+            if (zones.includes(currentValue)) select.value = currentValue;
         }
 
         function populateSpecialtySelect(selectedId = '') {
             const select = document.getElementById('office-specialty-input');
-            select.innerHTML = Object.entries(specialties).map(([id, spec]) => 
-                `<option value="${id}" ${id === selectedId ? 'selected' : ''}>${spec.name}</option>`
-            ).join('');
+            select.innerHTML = Object.entries(specialties).map(([id, spec]) => `<option value="${id}" ${id === selectedId ? 'selected' : ''}>${spec.name}</option>`).join('');
         }
 
         function saveOffice() {
             const editId = document.getElementById('edit-office-id').value;
-            const num = editId || document.getElementById('office-number-input').value.trim();
+            const buildingId = document.getElementById('office-building-input').value;
+            const num = document.getElementById('office-number-input').value.trim();
             const displayName = document.getElementById('office-name-input').value.trim();
             const specialtyId = document.getElementById('office-specialty-input').value;
             const floor = parseInt(document.getElementById('office-floor-input').value);
@@ -994,53 +1710,31 @@
             const schedule = document.getElementById('office-schedule-input').value.trim();
             const isActive = document.getElementById('office-active-input').checked;
             
-            if (!num || !specialtyId) {
-                showToast('Заполните обязательные поля');
-                return;
-            }
+            if (!num || !specialtyId || !buildingId) { showToast('Заполните обязательные поля'); return; }
             
-            // Generate node_id
-            const nodeId = `floor${floor}_${wing}_${num}`;
+            const officeId = editId || `${buildingId}_${num}`;
+            if (editId && !editId.startsWith(buildingId)) delete offices[editId];
             
-            offices[num] = {
-                floor,
-                wing,
-                specialty_id: specialtyId,
-                display_name: displayName || `Кабинет ${num}`,
-                node_id: nodeId,
-                doctor_name: doctorName,
-                schedule: schedule,
-                is_active: isActive
-            };
+            offices[officeId] = { building_id: buildingId, floor, wing, specialty_id: specialtyId, display_name: displayName || `Кабинет ${num}`, doctor_name: doctorName, schedule, is_active: isActive };
             
-            // Add node to graph if not exists
-            if (!navGraph.nodes[nodeId]) {
-                navGraph.nodes[nodeId] = { floor, name: `Каб. ${num}` };
-                // Connect to wing
-                const wingNode = `floor${floor}_${wing}`;
-                if (navGraph.nodes[wingNode]) {
-                    navGraph.edges.push([wingNode, nodeId]);
-                }
-            }
-            
+            navGraph = generateNavGraph();
             saveData();
             closeModal('office');
             renderAdminOffices();
             showToast('Кабинет сохранён');
         }
 
-        function deleteOffice(num) {
-            if (confirm(`Удалить кабинет ${num}?`)) {
-                delete offices[num];
+        function deleteOffice(id) {
+            if (confirm(`Удалить кабинет ${id.split('_')[1]}?`)) {
+                delete offices[id];
+                navGraph = generateNavGraph();
                 saveData();
                 renderAdminOffices();
                 showToast('Кабинет удалён');
             }
         }
 
-        function closeModal(type) {
-            document.getElementById('modal-' + type).classList.add('hidden');
-        }
+        function closeModal(type) { document.getElementById('modal-' + type).classList.add('hidden'); }
 
         // ==================== TOAST ====================
         function showToast(message) {
@@ -1052,11 +1746,7 @@
 
         // ==================== INIT ====================
         document.addEventListener('DOMContentLoaded', init);
-
-        // Enter key support
-        document.getElementById('room-input')?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') searchByRoom();
-        });
+        document.getElementById('room-input')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') searchByRoom(); });
     </script>
 </body>
 </html>
