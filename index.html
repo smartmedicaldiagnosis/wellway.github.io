@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Навигатор поликлиники</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .btn-specialty:hover { transform: translateY(-2px); }
+        .route-step { animation: fadeIn 0.3s ease-out forwards; opacity: 0; }
+        @keyframes fadeIn { to { opacity: 1; } }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-blue-600 text-white p-4 shadow-lg sticky top-0 z-50">
+        <div class="max-w-lg mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+                <h1 class="text-xl font-bold">Навигатор</h1>
+            </div>
+            <button onclick="showScreen('admin-login')" class="p-2 hover:bg-blue-700 rounded-lg transition" title="Администрирование">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-lg mx-auto p-4 pb-24">
+        <!-- Screen: Start -->
+        <div id="screen-start" class="screen active">
+            <div class="text-center mb-8 mt-4">
+                <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Найти кабинет</h2>
+                <p class="text-gray-500" id="current-location">📍 Вы у главного входа</p>
+            </div>
+
+            <!-- Option 1: Room Number -->
+            <div class="bg-white rounded-2xl shadow-md p-6 mb-4">
+                <h3 class="font-semibold text-lg text-gray-700 mb-4 flex items-center gap-2">
+                    <span class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold">1</span>
+                    Я знаю номер кабинета
+                </h3>
+                <div class="flex gap-2">
+                    <input type="text" id="room-input" placeholder="Например: 314" 
+                           class="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 text-lg focus:border-blue-500 focus:outline-none transition"
+                           inputmode="numeric">
+                    <button onclick="searchByRoom()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-semibold transition">
+                        Найти
+                    </button>
+                </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="flex items-center gap-4 my-6">
+                <div class="flex-1 h-px bg-gray-300"></div>
+                <span class="text-gray-400 font-medium">ИЛИ</span>
+                <div class="flex-1 h-px bg-gray-300"></div>
+            </div>
+
+            <!-- Option 2: Specialty -->
+            <div class="bg-white rounded-2xl shadow-md p-6 mb-6">
+                <h3 class="font-semibold text-lg text-gray-700 mb-4 flex items-center gap-2">
+                    <span class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">2</span>
+                    Я ищу специалиста
+                </h3>
+                <button onclick="showScreen('specialties')" 
+                        class="w-full bg-blue-500 hover:bg-blue-600 text-white py-4 rounded-xl font-semibold text-lg transition flex items-center justify-center gap-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    Выбрать специальность
+                </button>
+            </div>
+
+            <!-- Help Button -->
+            <button onclick="showHelp()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-4 rounded-xl font-medium transition flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Нужна помощь?
+            </button>
+        </div>
+
+        <!-- Screen: Specialties -->
+        <div id="screen-specialties" class="screen">
+            <button onclick="showScreen('start')" class="flex items-center gap-2 text-blue-600 mb-4 font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Назад
+            </button>
+
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Выберите специалиста</h2>
+
+            <!-- Search -->
+            <div class="relative mb-6">
+                <input type="text" id="specialty-search" placeholder="Начните вводить..." 
+                       oninput="filterSpecialties()"
+                       class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 pl-12 text-lg focus:border-blue-500 focus:outline-none transition">
+                <svg class="w-6 h-6 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </div>
+
+            <!-- Specialty List -->
+            <div id="specialty-list" class="space-y-3">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Screen: Room Selection -->
+        <div id="screen-rooms" class="screen">
+            <button onclick="showScreen('specialties')" class="flex items-center gap-2 text-blue-600 mb-4 font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Назад
+            </button>
+
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Выберите кабинет</h2>
+            <p class="text-gray-500 mb-6" id="rooms-specialty-name">Найдено несколько кабинетов</p>
+
+            <div id="room-list" class="space-y-3">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Screen: Route -->
+        <div id="screen-route" class="screen">
+            <button onclick="showScreen('start')" class="flex items-center gap-2 text-blue-600 mb-4 font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Новый поиск
+            </button>
+
+            <div class="bg-green-50 border-2 border-green-200 rounded-2xl p-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Ваша цель</p>
+                        <p class="font-bold text-lg text-gray-800" id="route-target">Кабинет 314</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="font-semibold text-lg text-gray-700 mb-4">Маршрут:</h3>
+
+            <div id="route-steps" class="space-y-4 mb-6">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- QR Scan Prompt -->
+            <div class="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4 mt-6">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-gray-800">Заблудились?</p>
+                        <p class="text-gray-600 text-sm">Отсканируйте любой QR-код в здании для обновления маршрута</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simulate QR Scan for Demo -->
+            <div class="mt-4">
+                <p class="text-gray-500 text-sm mb-2 text-center">Демо: выберите вашу текущую точку</p>
+                <select id="simulate-location" onchange="updateLocation()" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                    <option value="entrance">Главный вход</option>
+                    <option value="floor1_center">1 этаж - холл</option>
+                    <option value="floor1_left">1 этаж - левое крыло</option>
+                    <option value="floor1_right">1 этаж - правое крыло</option>
+                    <option value="stairs_1_2">Лестница 1-2 этаж</option>
+                    <option value="floor2_center">2 этаж - холл</option>
+                    <option value="floor2_left">2 этаж - левое крыло</option>
+                    <option value="floor2_right">2 этаж - правое крыло</option>
+                    <option value="stairs_2_3">Лестница 2-3 этаж</option>
+                    <option value="floor3_center">3 этаж - холл</option>
+                    <option value="floor3_left">3 этаж - левое крыло</option>
+                    <option value="floor3_right">3 этаж - правое крыло</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Screen: Help -->
+        <div id="screen-help" class="screen">
+            <button onclick="showScreen('start')" class="flex items-center gap-2 text-blue-600 mb-4 font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Назад
+            </button>
+
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Нужна помощь?</h2>
+
+            <div class="space-y-4">
+                <div class="bg-white rounded-2xl shadow-md p-5">
+                    <h3 class="font-semibold text-lg text-gray-800 mb-2 flex items-center gap-2">
+                        <span class="text-2xl">📍</span> Регистратура
+                    </h3>
+                    <p class="text-gray-600 mb-3">1 этаж, напротив входа</p>
+                    <p class="text-gray-500 text-sm">Время работы: Пн-Пт 8:00-19:00, Сб 9:00-15:00</p>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-md p-5">
+                    <h3 class="font-semibold text-lg text-gray-800 mb-2 flex items-center gap-2">
+                        <span class="text-2xl">📞</span> Телефон справочной
+                    </h3>
+                    <a href="tel:+78001234567" class="text-blue-600 text-xl font-semibold">8-800-123-45-67</a>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-md p-5">
+                    <h3 class="font-semibold text-lg text-gray-800 mb-2 flex items-center gap-2">
+                        <span class="text-2xl">🆘</span> Экстренная помощь
+                    </h3>
+                    <p class="text-gray-600">Кабинет 101 (1 этаж, левое крыло)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen: Admin Login -->
+        <div id="screen-admin-login" class="screen">
+            <button onclick="showScreen('start')" class="flex items-center gap-2 text-blue-600 mb-4 font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Назад
+            </button>
+
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Вход в админ-панель</h2>
+
+            <div class="bg-white rounded-2xl shadow-md p-6">
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-medium mb-2">Пароль</label>
+                    <input type="password" id="admin-password" placeholder="Введите пароль"
+                           class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none transition">
+                </div>
+                <button onclick="adminLogin()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold transition">
+                    Войти
+                </button>
+                <p class="text-center text-gray-400 text-sm mt-4">Демо-пароль: admin</p>
+            </div>
+        </div>
+
+        <!-- Screen: Admin Panel -->
+        <div id="screen-admin" class="screen">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Админ-панель</h2>
+                <button onclick="showScreen('start')" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex gap-2 mb-6">
+                <button onclick="switchAdminTab('specialties')" id="tab-specialties" 
+                        class="flex-1 py-3 px-4 rounded-xl font-medium transition bg-blue-500 text-white">
+                    Специальности
+                </button>
+                <button onclick="switchAdminTab('offices')" id="tab-offices"
+                        class="flex-1 py-3 px-4 rounded-xl font-medium transition bg-gray-200 text-gray-700">
+                    Кабинеты
+                </button>
+            </div>
+
+            <!-- Admin: Specialties -->
+            <div id="admin-specialties" class="admin-content">
+                <button onclick="showAddSpecialty()" class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold mb-4 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Добавить специальность
+                </button>
+
+                <div id="admin-specialty-list" class="space-y-3">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Admin: Offices -->
+            <div id="admin-offices" class="admin-content hidden">
+                <button onclick="showAddOffice()" class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold mb-4 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Добавить кабинет
+                </button>
+
+                <div id="admin-office-list" class="space-y-3">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal: Add/Edit Specialty -->
+        <div id="modal-specialty" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-md">
+                <h3 class="text-xl font-bold mb-4" id="modal-specialty-title">Добавить специальность</h3>
+                <input type="hidden" id="edit-specialty-id">
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">ID (латиница)</label>
+                        <input type="text" id="specialty-id-input" placeholder="например: cardiologist"
+                               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Название</label>
+                        <input type="text" id="specialty-name-input" placeholder="например: Кардиолог"
+                               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Синонимы (через запятую)</label>
+                        <input type="text" id="specialty-aliases-input" placeholder="сердце, сердечный врач"
+                               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Иконка (эмодзи)</label>
+                        <input type="text" id="specialty-icon-input" placeholder="❤️"
+                               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button onclick="closeModal('specialty')" class="flex-1 bg-gray-200 hover:bg-gray-300 py-3 rounded-xl font-medium transition">
+                        Отмена
+                    </button>
+                    <button onclick="saveSpecialty()" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold transition">
+                        Сохранить
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal: Add/Edit Office -->
+        <div id="modal-office" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+                <h3 class="text-xl font-bold mb-4" id="modal-office-title">Добавить кабинет</h3>
+                <input type="hidden" id="edit-office-id">
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Номер кабинета *</label>
+                        <input type="text" id="office-number-input" placeholder="например: 314"
+                               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Название</label>
+                        <input type="text" id="office-name-input" placeholder="например: Кабинет окулиста"
+                               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Специальность *</label>
+                        <select id="office-specialty-input" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Этаж *</label>
+                            <select id="office-floor-input" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                                <option value="1">1 этаж</option>
+                                <option value="2">2 этаж</option>
+                                <option value="3">3 этаж</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Крыло *</label>
+                            <select id="office-wing-input" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                                <option value="left">Левое</option>
+                                <option value="center">Центр</option>
+                                <option value="right">Правое</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    <p class="text-gray-500 text-sm">Поля для будущего использования:</p>
+                    
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">ФИО врача</label>
+                        <input type="text" id="office-doctor-input" placeholder="Иванов И.И."
+                               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Расписание</label>
+                        <input type="text" id="office-schedule-input" placeholder="Пн-Пт 9:00-15:00"
+                               class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" id="office-active-input" checked class="w-5 h-5">
+                        <label for="office-active-input" class="text-gray-700 font-medium">Кабинет работает</label>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button onclick="closeModal('office')" class="flex-1 bg-gray-200 hover:bg-gray-300 py-3 rounded-xl font-medium transition">
+                        Отмена
+                    </button>
+                    <button onclick="saveOffice()" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold transition">
+                        Сохранить
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="fixed bottom-4 left-4 right-4 bg-gray-800 text-white py-3 px-4 rounded-xl shadow-lg transform translate-y-full transition-transform duration-300 z-50 max-w-lg mx-auto">
+            <span id="toast-message">Сообщение</span>
+        </div>
+    </main>
+
+    <script>
+        // ==================== DATA ====================
+        let specialties = {
+            therapist: { name: "Терапевт", aliases: ["врач", "общий врач"], icon: "🩺" },
+            ophthalmologist: { name: "Окулист", aliases: ["глазной врач", "офтальмолог", "глаза"], icon: "👁️" },
+            ent: { name: "Отоларинголог (ЛОР)", aliases: ["лор", "ухо горло нос", "ухогорлонос"], icon: "👂" },
+            surgeon: { name: "Хирург", aliases: ["хирургия", "операция"], icon: "🔪" },
+            traumatologist: { name: "Травматолог", aliases: ["травма", "перелом", "ортопед"], icon: "🦴" },
+            ultrasound: { name: "УЗИ", aliases: ["ультразвук", "диагностика", "узи-кабинет"], icon: "📡" },
+            cardiologist: { name: "Кардиолог", aliases: ["сердце", "сердечный врач"], icon: "❤️" },
+            neurologist: { name: "Невролог", aliases: ["нервы", "невропатолог"], icon: "🧠" },
+            dentist: { name: "Стоматолог", aliases: ["зубной врач", "зубы", "дантист"], icon: "🦷" },
+            lab: { name: "Лаборатория (анализы)", aliases: ["анализы", "кровь", "забор крови"], icon: "🧪" },
+            procedures: { name: "Процедурный кабинет", aliases: ["процедуры", "уколы", "капельница"], icon: "💉" },
+            xray: { name: "Рентген", aliases: ["рентгенография", "снимок"], icon: "☢️" }
+        };
+
+        let offices = {
+            "101": { floor: 1, wing: "left", specialty_id: "procedures", display_name: "Процедурный кабинет", node_id: "floor1_left_1", doctor_name: "", schedule: "Пн-Пт 8:00-14:00", is_active: true },
+            "102": { floor: 1, wing: "left", specialty_id: "lab", display_name: "Лаборатория", node_id: "floor1_left_2", doctor_name: "Петрова М.И.", schedule: "Пн-Пт 7:30-12:00", is_active: true },
+            "105": { floor: 1, wing: "right", specialty_id: "xray", display_name: "Кабинет рентгена", node_id: "floor1_right_1", doctor_name: "Сидоров К.П.", schedule: "Пн-Пт 9:00-17:00", is_active: true },
+            "201": { floor: 2, wing: "left", specialty_id: "therapist", display_name: "Терапевт (участок 1)", node_id: "floor2_left_1", doctor_name: "Козлова А.В.", schedule: "Пн-Пт 8:00-15:00", is_active: true },
+            "202": { floor: 2, wing: "left", specialty_id: "therapist", display_name: "Терапевт (участок 2)", node_id: "floor2_left_2", doctor_name: "Николаев Д.С.", schedule: "Пн-Пт 14:00-20:00", is_active: true },
+            "210": { floor: 2, wing: "right", specialty_id: "ophthalmologist", display_name: "Кабинет окулиста", node_id: "floor2_right_1", doctor_name: "Иванова А.С.", schedule: "Пн-Пт 9:00-15:00", is_active: true },
+            "212": { floor: 2, wing: "right", specialty_id: "ophthalmologist", display_name: "Окулист (детский)", node_id: "floor2_right_2", doctor_name: "Смирнова Е.В.", schedule: "Пн-Пт 10:00-16:00", is_active: true },
+            "215": { floor: 2, wing: "right", specialty_id: "ent", display_name: "ЛОР-кабинет", node_id: "floor2_right_3", doctor_name: "Васильев Н.А.", schedule: "Пн-Сб 9:00-18:00", is_active: true },
+            "301": { floor: 3, wing: "left", specialty_id: "surgeon", display_name: "Кабинет хирурга", node_id: "floor3_left_1", doctor_name: "Федоров С.П.", schedule: "Пн-Пт 8:00-14:00", is_active: true },
+            "305": { floor: 3, wing: "left", specialty_id: "traumatologist", display_name: "Травматолог", node_id: "floor3_left_2", doctor_name: "Орлов М.К.", schedule: "Пн-Пт 9:00-17:00", is_active: true },
+            "310": { floor: 3, wing: "right", specialty_id: "ultrasound", display_name: "УЗИ брюшной полости", node_id: "floor3_right_1", doctor_name: "Морозова Л.И.", schedule: "Пн-Пт 8:00-16:00", is_active: true },
+            "312": { floor: 3, wing: "right", specialty_id: "ultrasound", display_name: "УЗИ сердца (ЭхоКГ)", node_id: "floor3_right_2", doctor_name: "Белов А.Р.", schedule: "Пн-Сб 9:00-15:00", is_active: true },
+            "314": { floor: 3, wing: "right", specialty_id: "cardiologist", display_name: "Кабинет кардиолога", node_id: "floor3_right_3", doctor_name: "Романов В.Е.", schedule: "Пн-Пт 10:00-18:00", is_active: true },
+            "320": { floor: 3, wing: "center", specialty_id: "neurologist", display_name: "Невролог", node_id: "floor3_center_1", doctor_name: "Князева Т.С.", schedule: "Пн-Чт 9:00-16:00", is_active: true },
+            "118": { floor: 1, wing: "center", specialty_id: "dentist", display_name: "Стоматология", node_id: "floor1_center_1", doctor_name: "Зубов И.И.", schedule: "Пн-Пт 8:00-20:00", is_active: true }
+        };
+
+        // Navigation Graph
+        const navGraph = {
+            nodes: {
+                entrance: { floor: 1, name: "Главный вход" },
+                floor1_center: { floor: 1, name: "1 этаж - холл" },
+                floor1_left: { floor: 1, name: "1 этаж - левое крыло" },
+                floor1_right: { floor: 1, name: "1 этаж - правое крыло" },
+                floor1_left_1: { floor: 1, name: "Каб. 101" },
+                floor1_left_2: { floor: 1, name: "Каб. 102" },
+                floor1_right_1: { floor: 1, name: "Каб. 105" },
+                floor1_center_1: { floor: 1, name: "Каб. 118" },
+                stairs_1_2: { floor: 1, name: "Лестница 1-2 этаж" },
+                floor2_center: { floor: 2, name: "2 этаж - холл" },
+                floor2_left: { floor: 2, name: "2 этаж - левое крыло" },
+                floor2_right: { floor: 2, name: "2 этаж - правое крыло" },
+                floor2_left_1: { floor: 2, name: "Каб. 201" },
+                floor2_left_2: { floor: 2, name: "Каб. 202" },
+                floor2_right_1: { floor: 2, name: "Каб. 210" },
+                floor2_right_2: { floor: 2, name: "Каб. 212" },
+                floor2_right_3: { floor: 2, name: "Каб. 215" },
+                stairs_2_3: { floor: 2, name: "Лестница 2-3 этаж" },
+                floor3_center: { floor: 3, name: "3 этаж - холл" },
+                floor3_left: { floor: 3, name: "3 этаж - левое крыло" },
+                floor3_right: { floor: 3, name: "3 этаж - правое крыло" },
+                floor3_left_1: { floor: 3, name: "Каб. 301" },
+                floor3_left_2: { floor: 3, name: "Каб. 305" },
+                floor3_right_1: { floor: 3, name: "Каб. 310" },
+                floor3_right_2: { floor: 3, name: "Каб. 312" },
+                floor3_right_3: { floor: 3, name: "Каб. 314" },
+                floor3_center_1: { floor: 3, name: "Каб. 320" }
+            },
+            edges: [
+                ["entrance", "floor1_center"],
+                ["floor1_center", "floor1_left"],
+                ["floor1_center", "floor1_right"],
+                ["floor1_center", "stairs_1_2"],
+                ["floor1_center", "floor1_center_1"],
+                ["floor1_left", "floor1_left_1"],
+                ["floor1_left", "floor1_left_2"],
+                ["floor1_right", "floor1_right_1"],
+                ["stairs_1_2", "floor2_center"],
+                ["floor2_center", "floor2_left"],
+                ["floor2_center", "floor2_right"],
+                ["floor2_center", "stairs_2_3"],
+                ["floor2_left", "floor2_left_1"],
+                ["floor2_left", "floor2_left_2"],
+                ["floor2_right", "floor2_right_1"],
+                ["floor2_right", "floor2_right_2"],
+                ["floor2_right", "floor2_right_3"],
+                ["stairs_2_3", "floor3_center"],
+                ["floor3_center", "floor3_left"],
+                ["floor3_center", "floor3_right"],
+                ["floor3_center", "floor3_center_1"],
+                ["floor3_left", "floor3_left_1"],
+                ["floor3_left", "floor3_left_2"],
+                ["floor3_right", "floor3_right_1"],
+                ["floor3_right", "floor3_right_2"],
+                ["floor3_right", "floor3_right_3"]
+            ]
+        };
+
+        // State
+        let currentLocation = "entrance";
+        let targetOffice = null;
+        let selectedSpecialty = null;
+
+        // ==================== INIT ====================
+        function init() {
+            loadData();
+            renderSpecialties();
+            renderAdminSpecialties();
+            renderAdminOffices();
+            checkURLParams();
+        }
+
+        function loadData() {
+            const savedSpecialties = localStorage.getItem('nav_specialties');
+            const savedOffices = localStorage.getItem('nav_offices');
+            if (savedSpecialties) specialties = JSON.parse(savedSpecialties);
+            if (savedOffices) offices = JSON.parse(savedOffices);
+        }
+
+        function saveData() {
+            localStorage.setItem('nav_specialties', JSON.stringify(specialties));
+            localStorage.setItem('nav_offices', JSON.stringify(offices));
+        }
+
+        function checkURLParams() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('from')) {
+                currentLocation = params.get('from');
+                updateLocationDisplay();
+            }
+            if (params.has('target')) {
+                targetOffice = params.get('target');
+                buildRoute();
+            }
+        }
+
+        // ==================== SCREENS ====================
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + screenId).classList.add('active');
+            
+            if (screenId === 'specialties') {
+                renderSpecialties();
+            }
+        }
+
+        function showHelp() {
+            showScreen('help');
+        }
+
+        // ==================== SPECIALTIES ====================
+        function renderSpecialties() {
+            const container = document.getElementById('specialty-list');
+            const search = document.getElementById('specialty-search')?.value.toLowerCase() || '';
+            
+            let html = '';
+            for (const [id, spec] of Object.entries(specialties)) {
+                const matches = spec.name.toLowerCase().includes(search) ||
+                               spec.aliases.some(a => a.toLowerCase().includes(search));
+                
+                if (search && !matches) continue;
+                
+                const officeCount = Object.values(offices).filter(o => o.specialty_id === id).length;
+                
+                html += `
+                    <button onclick="selectSpecialty('${id}')" 
+                            class="btn-specialty w-full bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 rounded-2xl p-4 text-left transition flex items-center gap-4">
+                        <span class="text-3xl">${spec.icon || '🏥'}</span>
+                        <div class="flex-1">
+                            <p class="font-semibold text-gray-800 text-lg">${spec.name}</p>
+                            <p class="text-gray-500 text-sm">${officeCount} ${getOfficeWord(officeCount)}</p>
+                        </div>
+                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                `;
+            }
+            
+            if (!html) {
+                html = '<p class="text-gray-500 text-center py-8">Ничего не найдено</p>';
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function filterSpecialties() {
+            renderSpecialties();
+        }
+
+        function getOfficeWord(count) {
+            if (count === 1) return 'кабинет';
+            if (count >= 2 && count <= 4) return 'кабинета';
+            return 'кабинетов';
+        }
+
+        function selectSpecialty(specId) {
+            selectedSpecialty = specId;
+            const specOffices = Object.entries(offices).filter(([num, o]) => o.specialty_id === specId);
+            
+            if (specOffices.length === 0) {
+                showToast('Кабинеты не найдены');
+                return;
+            }
+            
+            if (specOffices.length === 1) {
+                targetOffice = specOffices[0][0];
+                buildRoute();
+                return;
+            }
+            
+            // Show room selection
+            document.getElementById('rooms-specialty-name').textContent = 
+                `${specialties[specId].name} — выберите кабинет:`;
+            
+            const container = document.getElementById('room-list');
+            container.innerHTML = specOffices.map(([num, office]) => `
+                <button onclick="selectRoom('${num}')" 
+                        class="w-full bg-white hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-300 rounded-2xl p-4 text-left transition">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-bold text-xl text-gray-800">Кабинет ${num}</p>
+                            <p class="text-gray-600">${office.display_name}</p>
+                            <p class="text-gray-400 text-sm">${office.floor} этаж, ${getWingName(office.wing)} крыло</p>
+                        </div>
+                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </button>
+            `).join('');
+            
+            showScreen('rooms');
+        }
+
+        function selectRoom(roomNum) {
+            targetOffice = roomNum;
+            buildRoute();
+        }
+
+        function getWingName(wing) {
+            const names = { left: 'левое', right: 'правое', center: 'центральное' };
+            return names[wing] || wing;
+        }
+
+        // ==================== ROOM SEARCH ====================
+        function searchByRoom() {
+            const input = document.getElementById('room-input').value.trim();
+            if (!input) {
+                showToast('Введите номер кабинета');
+                return;
+            }
+            
+            if (!offices[input]) {
+                showToast('Кабинет не найден');
+                return;
+            }
+            
+            targetOffice = input;
+            buildRoute();
+        }
+
+        // ==================== ROUTING ====================
+        function buildRoute() {
+            if (!targetOffice || !offices[targetOffice]) {
+                showToast('Кабинет не найден');
+                return;
+            }
+            
+            const office = offices[targetOffice];
+            const targetNode = office.node_id;
+            
+            // Find path using BFS
+            const path = findPath(currentLocation, targetNode);
+            
+            if (!path) {
+                showToast('Не удалось построить маршрут');
+                return;
+            }
+            
+            // Display route
+            document.getElementById('route-target').textContent = 
+                `Кабинет ${targetOffice} — ${office.display_name}`;
+            
+            const stepsContainer = document.getElementById('route-steps');
+            const steps = generateInstructions(path, office);
+            
+            stepsContainer.innerHTML = steps.map((step, i) => `
+                <div class="route-step flex items-start gap-4" style="animation-delay: ${i * 0.1}s">
+                    <div class="w-10 h-10 ${i === steps.length - 1 ? 'bg-green-500' : 'bg-blue-500'} rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold">
+                        ${i === steps.length - 1 ? '✓' : i + 1}
+                    </div>
+                    <div class="flex-1 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                        <p class="text-gray-800 ${i === steps.length - 1 ? 'font-bold' : ''}">${step}</p>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('simulate-location').value = currentLocation;
+            showScreen('route');
+        }
+
+        function findPath(start, end) {
+            if (start === end) return [start];
+            
+            const adjacency = {};
+            for (const node of Object.keys(navGraph.nodes)) {
+                adjacency[node] = [];
+            }
+            for (const [a, b] of navGraph.edges) {
+                adjacency[a].push(b);
+                adjacency[b].push(a);
+            }
+            
+            const queue = [[start]];
+            const visited = new Set([start]);
+            
+            while (queue.length > 0) {
+                const path = queue.shift();
+                const node = path[path.length - 1];
+                
+                if (node === end) return path;
+                
+                for (const neighbor of adjacency[node] || []) {
+                    if (!visited.has(neighbor)) {
+                        visited.add(neighbor);
+                        queue.push([...path, neighbor]);
+                    }
+                }
+            }
+            
+            return null;
+        }
+
+        function generateInstructions(path, targetOffice) {
+            const instructions = [];
+            let prevFloor = navGraph.nodes[path[0]]?.floor || 1;
+            
+            for (let i = 0; i < path.length; i++) {
+                const node = path[i];
+                const nodeData = navGraph.nodes[node];
+                const floor = nodeData?.floor || 1;
+                
+                if (i === 0) {
+                    instructions.push(`Вы находитесь: ${nodeData?.name || node}`);
+                    continue;
+                }
+                
+                if (floor > prevFloor) {
+                    instructions.push(`⬆️ Поднимитесь на ${floor} этаж`);
+                } else if (floor < prevFloor) {
+                    instructions.push(`⬇️ Спуститесь на ${floor} этаж`);
+                }
+                
+                if (node.includes('left') && !node.includes('_left_')) {
+                    instructions.push(`⬅️ Идите в левое крыло`);
+                } else if (node.includes('right') && !node.includes('_right_')) {
+                    instructions.push(`➡️ Идите в правое крыло`);
+                } else if (node.includes('center') && !node.includes('_center_') && i > 0) {
+                    instructions.push(`⬆️ Пройдите в центральный холл`);
+                }
+                
+                prevFloor = floor;
+            }
+            
+            instructions.push(`🎯 Кабинет ${targetOffice.display_name ? `"${targetOffice.display_name}"` : ''} справа`);
+            
+            return instructions;
+        }
+
+        function updateLocation() {
+            currentLocation = document.getElementById('simulate-location').value;
+            updateLocationDisplay();
+            buildRoute();
+        }
+
+        function updateLocationDisplay() {
+            const node = navGraph.nodes[currentLocation];
+            document.getElementById('current-location').textContent = 
+                `📍 ${node?.name || 'Неизвестная точка'}`;
+        }
+
+        // ==================== ADMIN ====================
+        function adminLogin() {
+            const password = document.getElementById('admin-password').value;
+            if (password === 'admin') {
+                showScreen('admin');
+                renderAdminSpecialties();
+                renderAdminOffices();
+            } else {
+                showToast('Неверный пароль');
+            }
+        }
+
+        function switchAdminTab(tab) {
+            document.getElementById('tab-specialties').className = 
+                `flex-1 py-3 px-4 rounded-xl font-medium transition ${tab === 'specialties' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`;
+            document.getElementById('tab-offices').className = 
+                `flex-1 py-3 px-4 rounded-xl font-medium transition ${tab === 'offices' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`;
+            
+            document.getElementById('admin-specialties').classList.toggle('hidden', tab !== 'specialties');
+            document.getElementById('admin-offices').classList.toggle('hidden', tab !== 'offices');
+        }
+
+        function renderAdminSpecialties() {
+            const container = document.getElementById('admin-specialty-list');
+            container.innerHTML = Object.entries(specialties).map(([id, spec]) => `
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">${spec.icon || '🏥'}</span>
+                        <div>
+                            <p class="font-semibold text-gray-800">${spec.name}</p>
+                            <p class="text-gray-400 text-sm">ID: ${id}</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="editSpecialty('${id}')" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                        </button>
+                        <button onclick="deleteSpecialty('${id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderAdminOffices() {
+            const container = document.getElementById('admin-office-list');
+            container.innerHTML = Object.entries(offices).map(([num, office]) => `
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="font-bold text-lg text-gray-800">Кабинет ${num}</p>
+                        <div class="flex gap-2">
+                            <button onclick="editOffice('${num}')" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </button>
+                            <button onclick="deleteOffice('${num}')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-gray-600">${office.display_name}</p>
+                    <p class="text-gray-400 text-sm">${office.floor} этаж, ${getWingName(office.wing)} крыло • ${specialties[office.specialty_id]?.name || office.specialty_id}</p>
+                    ${office.doctor_name ? `<p class="text-gray-400 text-sm mt-1">👨‍⚕️ ${office.doctor_name}</p>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Specialty Modal
+        function showAddSpecialty() {
+            document.getElementById('modal-specialty-title').textContent = 'Добавить специальность';
+            document.getElementById('edit-specialty-id').value = '';
+            document.getElementById('specialty-id-input').value = '';
+            document.getElementById('specialty-id-input').disabled = false;
+            document.getElementById('specialty-name-input').value = '';
+            document.getElementById('specialty-aliases-input').value = '';
+            document.getElementById('specialty-icon-input').value = '';
+            document.getElementById('modal-specialty').classList.remove('hidden');
+        }
+
+        function editSpecialty(id) {
+            const spec = specialties[id];
+            document.getElementById('modal-specialty-title').textContent = 'Редактировать специальность';
+            document.getElementById('edit-specialty-id').value = id;
+            document.getElementById('specialty-id-input').value = id;
+            document.getElementById('specialty-id-input').disabled = true;
+            document.getElementById('specialty-name-input').value = spec.name;
+            document.getElementById('specialty-aliases-input').value = spec.aliases.join(', ');
+            document.getElementById('specialty-icon-input').value = spec.icon || '';
+            document.getElementById('modal-specialty').classList.remove('hidden');
+        }
+
+        function saveSpecialty() {
+            const editId = document.getElementById('edit-specialty-id').value;
+            const id = editId || document.getElementById('specialty-id-input').value.trim();
+            const name = document.getElementById('specialty-name-input').value.trim();
+            const aliases = document.getElementById('specialty-aliases-input').value.split(',').map(a => a.trim()).filter(a => a);
+            const icon = document.getElementById('specialty-icon-input').value.trim() || '🏥';
+            
+            if (!id || !name) {
+                showToast('Заполните обязательные поля');
+                return;
+            }
+            
+            specialties[id] = { name, aliases, icon };
+            saveData();
+            closeModal('specialty');
+            renderAdminSpecialties();
+            renderSpecialties();
+            showToast('Специальность сохранена');
+        }
+
+        function deleteSpecialty(id) {
+            if (confirm(`Удалить специальность "${specialties[id].name}"?`)) {
+                delete specialties[id];
+                saveData();
+                renderAdminSpecialties();
+                renderSpecialties();
+                showToast('Специальность удалена');
+            }
+        }
+
+        // Office Modal
+        function showAddOffice() {
+            document.getElementById('modal-office-title').textContent = 'Добавить кабинет';
+            document.getElementById('edit-office-id').value = '';
+            document.getElementById('office-number-input').value = '';
+            document.getElementById('office-number-input').disabled = false;
+            document.getElementById('office-name-input').value = '';
+            document.getElementById('office-floor-input').value = '1';
+            document.getElementById('office-wing-input').value = 'left';
+            document.getElementById('office-doctor-input').value = '';
+            document.getElementById('office-schedule-input').value = '';
+            document.getElementById('office-active-input').checked = true;
+            populateSpecialtySelect();
+            document.getElementById('modal-office').classList.remove('hidden');
+        }
+
+        function editOffice(num) {
+            const office = offices[num];
+            document.getElementById('modal-office-title').textContent = 'Редактировать кабинет';
+            document.getElementById('edit-office-id').value = num;
+            document.getElementById('office-number-input').value = num;
+            document.getElementById('office-number-input').disabled = true;
+            document.getElementById('office-name-input').value = office.display_name || '';
+            document.getElementById('office-floor-input').value = office.floor;
+            document.getElementById('office-wing-input').value = office.wing;
+            document.getElementById('office-doctor-input').value = office.doctor_name || '';
+            document.getElementById('office-schedule-input').value = office.schedule || '';
+            document.getElementById('office-active-input').checked = office.is_active !== false;
+            populateSpecialtySelect(office.specialty_id);
+            document.getElementById('modal-office').classList.remove('hidden');
+        }
+
+        function populateSpecialtySelect(selectedId = '') {
+            const select = document.getElementById('office-specialty-input');
+            select.innerHTML = Object.entries(specialties).map(([id, spec]) => 
+                `<option value="${id}" ${id === selectedId ? 'selected' : ''}>${spec.name}</option>`
+            ).join('');
+        }
+
+        function saveOffice() {
+            const editId = document.getElementById('edit-office-id').value;
+            const num = editId || document.getElementById('office-number-input').value.trim();
+            const displayName = document.getElementById('office-name-input').value.trim();
+            const specialtyId = document.getElementById('office-specialty-input').value;
+            const floor = parseInt(document.getElementById('office-floor-input').value);
+            const wing = document.getElementById('office-wing-input').value;
+            const doctorName = document.getElementById('office-doctor-input').value.trim();
+            const schedule = document.getElementById('office-schedule-input').value.trim();
+            const isActive = document.getElementById('office-active-input').checked;
+            
+            if (!num || !specialtyId) {
+                showToast('Заполните обязательные поля');
+                return;
+            }
+            
+            // Generate node_id
+            const nodeId = `floor${floor}_${wing}_${num}`;
+            
+            offices[num] = {
+                floor,
+                wing,
+                specialty_id: specialtyId,
+                display_name: displayName || `Кабинет ${num}`,
+                node_id: nodeId,
+                doctor_name: doctorName,
+                schedule: schedule,
+                is_active: isActive
+            };
+            
+            // Add node to graph if not exists
+            if (!navGraph.nodes[nodeId]) {
+                navGraph.nodes[nodeId] = { floor, name: `Каб. ${num}` };
+                // Connect to wing
+                const wingNode = `floor${floor}_${wing}`;
+                if (navGraph.nodes[wingNode]) {
+                    navGraph.edges.push([wingNode, nodeId]);
+                }
+            }
+            
+            saveData();
+            closeModal('office');
+            renderAdminOffices();
+            showToast('Кабинет сохранён');
+        }
+
+        function deleteOffice(num) {
+            if (confirm(`Удалить кабинет ${num}?`)) {
+                delete offices[num];
+                saveData();
+                renderAdminOffices();
+                showToast('Кабинет удалён');
+            }
+        }
+
+        function closeModal(type) {
+            document.getElementById('modal-' + type).classList.add('hidden');
+        }
+
+        // ==================== TOAST ====================
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = message;
+            toast.classList.remove('translate-y-full');
+            setTimeout(() => toast.classList.add('translate-y-full'), 3000);
+        }
+
+        // ==================== INIT ====================
+        document.addEventListener('DOMContentLoaded', init);
+
+        // Enter key support
+        document.getElementById('room-input')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchByRoom();
+        });
+    </script>
+</body>
+</html>
