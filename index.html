@@ -22,6 +22,12 @@
         .building-btn { transition: all 0.2s; }
         .building-btn:hover { transform: scale(1.02); }
         .building-btn.active { ring: 2px; }
+        /* Fix for select dropdown text visibility */
+        #location-select option,
+        #location-select optgroup {
+            color: #1f2937;
+            background: white;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -244,28 +250,8 @@
 
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Нужна помощь?</h2>
 
-            <div class="space-y-4">
-                <div class="bg-white rounded-2xl shadow-md p-5">
-                    <h3 class="font-semibold text-lg text-gray-800 mb-2 flex items-center gap-2">
-                        <span class="text-2xl">📍</span> Регистратура
-                    </h3>
-                    <p class="text-gray-600 mb-3">Главный корпус, 1 этаж, напротив входа</p>
-                    <p class="text-gray-500 text-sm">Время работы: Пн-Пт 8:00-19:00, Сб 9:00-15:00</p>
-                </div>
-
-                <div class="bg-white rounded-2xl shadow-md p-5">
-                    <h3 class="font-semibold text-lg text-gray-800 mb-2 flex items-center gap-2">
-                        <span class="text-2xl">📞</span> Телефон справочной
-                    </h3>
-                    <a href="tel:+78001234567" class="text-blue-600 text-xl font-semibold">8-800-123-45-67</a>
-                </div>
-
-                <div class="bg-white rounded-2xl shadow-md p-5">
-                    <h3 class="font-semibold text-lg text-gray-800 mb-2 flex items-center gap-2">
-                        <span class="text-2xl">🆘</span> Экстренная помощь
-                    </h3>
-                    <p class="text-gray-600">Кабинет 101 (Главный корпус, 1 этаж, левое крыло)</p>
-                </div>
+            <div class="space-y-4" id="help-content">
+                <!-- Populated by JS -->
             </div>
         </div>
 
@@ -289,7 +275,7 @@
                 <button onclick="adminLogin()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold transition">
                     Войти
                 </button>
-                <p class="text-center text-gray-400 text-sm mt-4">Демо-пароль: admin</p>
+                <p class="text-center text-gray-400 text-sm mt-4" id="demo-password-hint">Демо-пароль: admin</p>
             </div>
         </div>
 
@@ -321,6 +307,10 @@
                 <button onclick="switchAdminTab('offices')" id="tab-offices"
                         class="flex-1 py-2 px-2 rounded-lg font-medium transition text-xs text-gray-600 whitespace-nowrap">
                     🚪 Кабинеты
+                </button>
+                <button onclick="switchAdminTab('settings')" id="tab-settings"
+                        class="flex-1 py-2 px-2 rounded-lg font-medium transition text-xs text-gray-600 whitespace-nowrap">
+                    ⚙️ Настройки
                 </button>
             </div>
 
@@ -391,6 +381,103 @@
 
                 <div id="admin-office-list" class="space-y-3">
                     <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Admin: Settings -->
+            <div id="admin-settings" class="admin-content hidden">
+                <div class="space-y-4">
+                    <!-- Password -->
+                    <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-lg text-gray-800 mb-4 flex items-center gap-2">
+                            <span class="text-xl">🔐</span> Пароль администратора
+                        </h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Текущий пароль</label>
+                                <input type="password" id="settings-current-password" placeholder="Введите текущий пароль"
+                                       class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Новый пароль</label>
+                                <input type="password" id="settings-new-password" placeholder="Введите новый пароль"
+                                       class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Подтвердите новый пароль</label>
+                                <input type="password" id="settings-confirm-password" placeholder="Повторите новый пароль"
+                                       class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                            </div>
+                            <button onclick="changePassword()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold transition">
+                                Сменить пароль
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-lg text-gray-800 mb-4 flex items-center gap-2">
+                            <span class="text-xl">📞</span> Телефон справочной
+                        </h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Номер телефона</label>
+                                <input type="tel" id="settings-phone" placeholder="8-800-123-45-67"
+                                       class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Описание (необязательно)</label>
+                                <input type="text" id="settings-phone-desc" placeholder="Бесплатно по России"
+                                       class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Registry -->
+                    <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-lg text-gray-800 mb-4 flex items-center gap-2">
+                            <span class="text-xl">📍</span> Регистратура
+                        </h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Местоположение</label>
+                                <input type="text" id="settings-registry-location" placeholder="Главный корпус, 1 этаж, напротив входа"
+                                       class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Время работы</label>
+                                <input type="text" id="settings-registry-hours" placeholder="Пн-Пт 8:00-19:00, Сб 9:00-15:00"
+                                       class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Emergency -->
+                    <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-lg text-gray-800 mb-4 flex items-center gap-2">
+                            <span class="text-xl">🆘</span> Экстренная помощь
+                        </h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Местоположение</label>
+                                <input type="text" id="settings-emergency-location" placeholder="Кабинет 101 (Главный корпус, 1 этаж)"
+                                       class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Телефон экстренной помощи</label>
+                                <input type="tel" id="settings-emergency-phone" placeholder="103 или внутренний номер"
+                                       class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Save Button -->
+                    <button onclick="saveSettings()" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-semibold text-lg transition flex items-center justify-center gap-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Сохранить настройки
+                    </button>
                 </div>
             </div>
         </div>
@@ -716,6 +803,17 @@
             "diagnostic_201": { building_id: "diagnostic", floor: 2, wing: "left", specialty_id: "lab", display_name: "Лаборатория (расширенная)", doctor_name: "Анализова Т.Т.", schedule: "Пн-Пт 7:00-14:00", is_active: true }
         };
 
+        // Settings / Настройки
+        let settings = {
+            adminPassword: "admin",
+            phone: "8-800-123-45-67",
+            phoneDesc: "Бесплатно по России",
+            registryLocation: "Главный корпус, 1 этаж, напротив входа",
+            registryHours: "Пн-Пт 8:00-19:00, Сб 9:00-15:00",
+            emergencyLocation: "Кабинет 101 (Главный корпус, 1 этаж, левое крыло)",
+            emergencyPhone: "103"
+        };
+
         // State
         let currentLocation = "main_entrance";
         let currentBuilding = "main";
@@ -782,16 +880,33 @@
                 const buildingFloors = getBuildingFloors(buildingId);
                 const sortedFloorNums = buildingFloors.map(([id, f]) => f.number).sort((a, b) => a - b);
                 
+                // If no floors defined, create virtual floor 1
+                if (sortedFloorNums.length === 0) {
+                    sortedFloorNums.push(1);
+                    nodes[`${buildingId}_floor1_center`] = { building: buildingId, floor: 1, name: `${building.short_name} — 1 этаж, холл` };
+                    nodes[`${buildingId}_floor1_left`] = { building: buildingId, floor: 1, name: `${building.short_name} — 1 этаж, левое` };
+                    nodes[`${buildingId}_floor1_right`] = { building: buildingId, floor: 1, name: `${building.short_name} — 1 этаж, правое` };
+                    edges.push([`${buildingId}_floor1_center`, `${buildingId}_floor1_left`]);
+                    edges.push([`${buildingId}_floor1_center`, `${buildingId}_floor1_right`]);
+                }
+                
                 for (const [floorId, floor] of buildingFloors) {
                     const floorNum = floor.number;
                     const floorName = getFloorDisplayName(buildingId, floorNum);
                     
-                    nodes[`${buildingId}_floor${floorNum}_center`] = { building: buildingId, floor: floorNum, name: `${building.short_name} — ${floorName}, холл` };
+                    // Always create center node for the floor
+                    const centerNodeId = `${buildingId}_floor${floorNum}_center`;
+                    if (!nodes[centerNodeId]) {
+                        nodes[centerNodeId] = { building: buildingId, floor: floorNum, name: `${building.short_name} — ${floorName}, холл` };
+                    }
                     
                     const allZones = [...(floor.zones || []), ...(floor.custom_zones || [])];
                     for (const zone of allZones) {
                         if (zone !== 'center') {
-                            nodes[`${buildingId}_floor${floorNum}_${zone}`] = { building: buildingId, floor: floorNum, name: `${building.short_name} — ${floorName}, ${getZoneShortName(zone)}` };
+                            const zoneNodeId = `${buildingId}_floor${floorNum}_${zone}`;
+                            if (!nodes[zoneNodeId]) {
+                                nodes[zoneNodeId] = { building: buildingId, floor: floorNum, name: `${building.short_name} — ${floorName}, ${getZoneShortName(zone)}` };
+                            }
                             edges.push([`${buildingId}_floor${floorNum}_center`, `${buildingId}_floor${floorNum}_${zone}`]);
                         }
                     }
@@ -817,31 +932,74 @@
                     }
                 }
                 
+                // Connect entrance to the first floor (prefer floor 1, otherwise the lowest floor)
                 const firstFloor = sortedFloorNums.find(n => n >= 1) || sortedFloorNums[0] || 1;
-                edges.push([`${buildingId}_entrance`, `${buildingId}_floor${firstFloor}_center`]);
+                const firstFloorCenter = `${buildingId}_floor${firstFloor}_center`;
+                if (nodes[firstFloorCenter]) {
+                    edges.push([`${buildingId}_entrance`, firstFloorCenter]);
+                }
             }
             
+            // Add office nodes
             for (const [officeId, office] of Object.entries(offices)) {
                 const nodeId = `office_${officeId}`;
                 const roomNum = officeId.split('_')[1];
                 nodes[nodeId] = { building: office.building_id, floor: office.floor, name: `Каб. ${roomNum}` };
+                
+                // Connect office to wing or center
                 const wingNode = `${office.building_id}_floor${office.floor}_${office.wing}`;
+                const centerNode = `${office.building_id}_floor${office.floor}_center`;
+                
                 if (nodes[wingNode]) {
                     edges.push([wingNode, nodeId]);
+                } else if (nodes[centerNode]) {
+                    edges.push([centerNode, nodeId]);
                 } else {
-                    edges.push([`${office.building_id}_floor${office.floor}_center`, nodeId]);
+                    // Create the floor center node if it doesn't exist
+                    const building = buildings[office.building_id];
+                    nodes[centerNode] = { building: office.building_id, floor: office.floor, name: `${building?.short_name || office.building_id} — ${office.floor} этаж, холл` };
+                    edges.push([`${office.building_id}_entrance`, centerNode]);
+                    edges.push([centerNode, nodeId]);
                 }
             }
             
+            // Add transitions between connected buildings
             for (const [buildingId, building] of Object.entries(buildings)) {
                 for (const connectedId of building.connections || []) {
+                    if (!buildings[connectedId]) continue;
+                    
                     const transitionId = `transition_${buildingId}_${connectedId}`;
                     const reverseId = `transition_${connectedId}_${buildingId}`;
+                    
                     if (!nodes[transitionId] && !nodes[reverseId]) {
                         nodes[transitionId] = { building: buildingId, floor: 1, name: `Переход в ${buildings[connectedId]?.short_name || connectedId}` };
-                        edges.push([`${buildingId}_floor1_center`, transitionId]);
-                        edges.push([transitionId, `${connectedId}_floor1_center`]);
+                        
+                        // Find first floor centers for both buildings
+                        const buildingFloors1 = getBuildingFloors(buildingId);
+                        const sortedFloors1 = buildingFloors1.map(([id, f]) => f.number).sort((a, b) => a - b);
+                        const floor1 = sortedFloors1.find(n => n >= 1) || sortedFloors1[0] || 1;
+                        
+                        const buildingFloors2 = getBuildingFloors(connectedId);
+                        const sortedFloors2 = buildingFloors2.map(([id, f]) => f.number).sort((a, b) => a - b);
+                        const floor2 = sortedFloors2.find(n => n >= 1) || sortedFloors2[0] || 1;
+                        
+                        const center1 = `${buildingId}_floor${floor1}_center`;
+                        const center2 = `${connectedId}_floor${floor2}_center`;
+                        
+                        if (nodes[center1]) edges.push([center1, transitionId]);
+                        if (nodes[center2]) edges.push([transitionId, center2]);
                     }
+                }
+            }
+            
+            // For disconnected buildings - add a global exit/street connection
+            // This allows routing between any buildings via "exit to street"
+            const buildingIds = Object.keys(buildings);
+            if (buildingIds.length > 1) {
+                nodes['street'] = { building: null, floor: 0, name: 'Выход на улицу' };
+                
+                for (const buildingId of buildingIds) {
+                    edges.push([`${buildingId}_entrance`, 'street']);
                 }
             }
             
@@ -862,6 +1020,10 @@
             renderAdminFloors();
             renderAdminSpecialties();
             renderAdminOffices();
+            renderHelpScreen();
+            // Update demo password hint
+            const hint = document.getElementById('demo-password-hint');
+            if (hint) hint.textContent = `Демо-пароль: ${settings.adminPassword}`;
         }
 
         function loadData() {
@@ -869,10 +1031,12 @@
             const savedFloors = localStorage.getItem('nav_floors');
             const savedSpecialties = localStorage.getItem('nav_specialties');
             const savedOffices = localStorage.getItem('nav_offices');
+            const savedSettings = localStorage.getItem('nav_settings');
             if (savedBuildings) buildings = JSON.parse(savedBuildings);
             if (savedFloors) floors = JSON.parse(savedFloors);
             if (savedSpecialties) specialties = JSON.parse(savedSpecialties);
             if (savedOffices) offices = JSON.parse(savedOffices);
+            if (savedSettings) settings = { ...settings, ...JSON.parse(savedSettings) };
         }
 
         function saveData() {
@@ -880,6 +1044,7 @@
             localStorage.setItem('nav_floors', JSON.stringify(floors));
             localStorage.setItem('nav_specialties', JSON.stringify(specialties));
             localStorage.setItem('nav_offices', JSON.stringify(offices));
+            localStorage.setItem('nav_settings', JSON.stringify(settings));
         }
 
         // ==================== BUILDING SELECTION ====================
@@ -988,7 +1153,10 @@
             if (screenId === 'specialties') renderSpecialties();
         }
 
-        function showHelp() { showScreen('help'); }
+        function showHelp() { 
+            renderHelpScreen();
+            showScreen('help'); 
+        }
 
         // ==================== SPECIALTIES ====================
         function renderSpecialties() {
@@ -1168,35 +1336,82 @@
             const instructions = [];
             let prevFloor = navGraph.nodes[path[0]]?.floor || 1;
             let prevBuilding = navGraph.nodes[path[0]]?.building || currentBuilding;
+            let exitedToStreet = false;
             
             for (let i = 0; i < path.length; i++) {
                 const node = path[i];
                 const nodeData = navGraph.nodes[node];
                 const floor = nodeData?.floor || 1;
-                const building = nodeData?.building || currentBuilding;
+                const building = nodeData?.building;
                 
-                if (i === 0) { instructions.push(`📍 Вы находитесь: ${nodeData?.name || node}`); continue; }
+                if (i === 0) { 
+                    instructions.push(`📍 Вы находитесь: ${nodeData?.name || node}`); 
+                    continue; 
+                }
                 
-                if (building !== prevBuilding) {
-                    instructions.push(`🚶 Перейдите в ${buildings[building]?.name || building}`);
+                // Handle street node (exit building)
+                if (node === 'street') {
+                    instructions.push(`🚪 Выйдите из здания на улицу`);
+                    exitedToStreet = true;
+                    continue;
+                }
+                
+                // Handle entrance after street
+                if (node.includes('_entrance') && exitedToStreet) {
+                    const enterBuilding = node.split('_')[0];
+                    instructions.push(`🏢 Войдите в ${buildings[enterBuilding]?.name || enterBuilding}`);
+                    prevBuilding = enterBuilding;
+                    exitedToStreet = false;
+                    continue;
+                }
+                
+                // Handle transition between connected buildings
+                if (node.includes('transition_')) {
+                    const parts = node.split('_');
+                    const toBuilding = parts[2];
+                    instructions.push(`🚶 Пройдите через переход в ${buildings[toBuilding]?.name || toBuilding}`);
+                    continue;
+                }
+                
+                // Handle building change (for connected buildings)
+                if (building && building !== prevBuilding && prevBuilding) {
+                    // Only show if not already handled by transition or street
+                    if (!path[i-1]?.includes('transition_') && !path[i-1]?.includes('_entrance')) {
+                        instructions.push(`🚶 Перейдите в ${buildings[building]?.name || building}`);
+                    }
                     prevBuilding = building;
                 }
                 
+                // Handle elevator
                 if (node.includes('_elevator_')) {
                     if (floor !== prevFloor) {
                         instructions.push(`🛗 На лифте на ${getFloorDisplayName(building, floor)}`);
+                        prevFloor = floor;
                     }
-                } else if (floor > prevFloor) {
-                    instructions.push(`⬆️ Поднимитесь на ${getFloorDisplayName(building, floor)}`);
-                } else if (floor < prevFloor) {
-                    instructions.push(`⬇️ Спуститесь на ${getFloorDisplayName(building, floor)}`);
+                    continue;
                 }
                 
+                // Handle stairs (floor change)
+                if (node.includes('_stairs_')) {
+                    continue; // Stairs are intermediate, floor change will be shown
+                }
+                
+                // Handle floor change
+                if (floor > prevFloor) {
+                    instructions.push(`⬆️ Поднимитесь на ${getFloorDisplayName(building, floor)}`);
+                    prevFloor = floor;
+                } else if (floor < prevFloor && floor > 0) {
+                    instructions.push(`⬇️ Спуститесь на ${getFloorDisplayName(building, floor)}`);
+                    prevFloor = floor;
+                }
+                
+                // Handle wing/zone navigation
                 const zoneMatch = node.match(/_floor\d+_(\w+)$/);
                 if (zoneMatch && zoneMatch[1] !== 'center' && !node.includes('office_')) {
                     instructions.push(`${getZoneIcon(zoneMatch[1])} Идите в ${getZoneShortName(zoneMatch[1])} крыло`);
                 }
-                prevFloor = floor;
+                
+                if (building) prevBuilding = building;
             }
             
             instructions.push(`🎯 Кабинет "${targetOffice.display_name}" — вы на месте!`);
@@ -1210,7 +1425,7 @@
 
         // ==================== ADMIN ====================
         function adminLogin() {
-            if (document.getElementById('admin-password').value === 'admin') {
+            if (document.getElementById('admin-password').value === settings.adminPassword) {
                 showScreen('admin');
                 renderAdminBuildings();
                 populateFloorBuildingSelect();
@@ -1223,8 +1438,100 @@
             }
         }
 
+        // ==================== SETTINGS ====================
+        function populateSettingsForm() {
+            document.getElementById('settings-phone').value = settings.phone || '';
+            document.getElementById('settings-phone-desc').value = settings.phoneDesc || '';
+            document.getElementById('settings-registry-location').value = settings.registryLocation || '';
+            document.getElementById('settings-registry-hours').value = settings.registryHours || '';
+            document.getElementById('settings-emergency-location').value = settings.emergencyLocation || '';
+            document.getElementById('settings-emergency-phone').value = settings.emergencyPhone || '';
+            document.getElementById('settings-current-password').value = '';
+            document.getElementById('settings-new-password').value = '';
+            document.getElementById('settings-confirm-password').value = '';
+        }
+
+        function changePassword() {
+            const currentPassword = document.getElementById('settings-current-password').value;
+            const newPassword = document.getElementById('settings-new-password').value;
+            const confirmPassword = document.getElementById('settings-confirm-password').value;
+            
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showToast('Заполните все поля');
+                return;
+            }
+            
+            if (currentPassword !== settings.adminPassword) {
+                showToast('Неверный текущий пароль');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                showToast('Пароли не совпадают');
+                return;
+            }
+            
+            if (newPassword.length < 4) {
+                showToast('Пароль должен быть не менее 4 символов');
+                return;
+            }
+            
+            settings.adminPassword = newPassword;
+            saveData();
+            document.getElementById('settings-current-password').value = '';
+            document.getElementById('settings-new-password').value = '';
+            document.getElementById('settings-confirm-password').value = '';
+            showToast('Пароль успешно изменён');
+        }
+
+        function saveSettings() {
+            settings.phone = document.getElementById('settings-phone').value.trim();
+            settings.phoneDesc = document.getElementById('settings-phone-desc').value.trim();
+            settings.registryLocation = document.getElementById('settings-registry-location').value.trim();
+            settings.registryHours = document.getElementById('settings-registry-hours').value.trim();
+            settings.emergencyLocation = document.getElementById('settings-emergency-location').value.trim();
+            settings.emergencyPhone = document.getElementById('settings-emergency-phone').value.trim();
+            
+            saveData();
+            showToast('Настройки сохранены');
+        }
+
+        function renderHelpScreen() {
+            const container = document.getElementById('help-content');
+            if (!container) return;
+            
+            const phoneLink = settings.phone.replace(/[^0-9+]/g, '');
+            const emergencyPhoneLink = settings.emergencyPhone.replace(/[^0-9+]/g, '');
+            
+            container.innerHTML = `
+                <div class="bg-white rounded-2xl shadow-md p-5">
+                    <h3 class="font-semibold text-lg text-gray-800 mb-2 flex items-center gap-2">
+                        <span class="text-2xl">📍</span> Регистратура
+                    </h3>
+                    <p class="text-gray-600 mb-3">${settings.registryLocation || 'Не указано'}</p>
+                    ${settings.registryHours ? `<p class="text-gray-500 text-sm">Время работы: ${settings.registryHours}</p>` : ''}
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-md p-5">
+                    <h3 class="font-semibold text-lg text-gray-800 mb-2 flex items-center gap-2">
+                        <span class="text-2xl">📞</span> Телефон справочной
+                    </h3>
+                    <a href="tel:${phoneLink}" class="text-blue-600 text-xl font-semibold">${settings.phone || 'Не указан'}</a>
+                    ${settings.phoneDesc ? `<p class="text-gray-500 text-sm mt-1">${settings.phoneDesc}</p>` : ''}
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-md p-5">
+                    <h3 class="font-semibold text-lg text-gray-800 mb-2 flex items-center gap-2">
+                        <span class="text-2xl">🆘</span> Экстренная помощь
+                    </h3>
+                    <p class="text-gray-600">${settings.emergencyLocation || 'Не указано'}</p>
+                    ${settings.emergencyPhone ? `<a href="tel:${emergencyPhoneLink}" class="text-red-600 text-lg font-semibold mt-2 inline-block">📞 ${settings.emergencyPhone}</a>` : ''}
+                </div>
+            `;
+        }
+
         function switchAdminTab(tab) {
-            ['buildings', 'floors', 'specialties', 'offices'].forEach(t => {
+            ['buildings', 'floors', 'specialties', 'offices', 'settings'].forEach(t => {
                 const tabBtn = document.getElementById('tab-' + t);
                 const content = document.getElementById('admin-' + t);
                 if (t === tab) {
@@ -1237,6 +1544,7 @@
             });
             if (tab === 'floors') { populateFloorBuildingSelect(); renderAdminFloors(); }
             if (tab === 'offices') populateBuildingSelects();
+            if (tab === 'settings') populateSettingsForm();
         }
 
         function populateBuildingSelects() {
